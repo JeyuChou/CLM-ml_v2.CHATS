@@ -59,11 +59,13 @@ module clm_time_manager
 
   integer, public :: dtstep   ! Model time step (s)
   integer, public :: itim     ! Current model time step number
+  !$OMP THREADPRIVATE(itim)
 
   integer  :: start_date_ymd  ! Year, month and day of the simulation start date in yyyymmdd format (e.g., 19960701)
   integer  :: start_date_tod  ! Time of day (UTC) of the simulation start date (seconds past 0Z)
 
   integer  :: curr_date_ymd   ! Year, month and day at the end of the current timestep in yyyymmdd format (e.g., 19960701)
+  !$OMP THREADPRIVATE(curr_date_ymd)
   integer  :: curr_date_tod   ! Time of day (UTC) at the end of the current timestep (seconds past 0Z)
 
   ! Calendary type (NOLEAP or GREGORIAN)

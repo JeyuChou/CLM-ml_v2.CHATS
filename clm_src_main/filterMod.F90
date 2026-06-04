@@ -33,7 +33,7 @@ module filterMod
     integer, pointer :: hydrologyc(:)         ! hydrology filter (columns)
 
   end type clumpfilter
-  type(clumpfilter), public, target :: filter
+  type(clumpfilter), public, target, allocatable :: filter(:)
 
   ! !PUBLIC MEMBER FUNCTIONS:
   public :: allocFilters                      ! Initialize data structure
@@ -44,39 +44,50 @@ module filterMod
 contains
 
   !-----------------------------------------------------------------------
-  subroutine allocFilters (filter, begp, endp, begc, endc)
+  subroutine allocFilters (filt, begp, endp, begc, endc)
     !
     ! !DESCRIPTION:
-    ! Initialize module data structure
+    ! Allocate one clumpfilter element.
+    !
+    ! Filter arrays are 1-indexed LISTS of subgrid indices, not arrays
+    ! indexed by the subgrid index itself.  Always allocating from 1 means
+    ! the caller loop  "do f=1,num_nolakec; c=nolakec(f)"  works correctly
+    ! regardless of which clump index nc is stored inside the list.
     !
     ! !ARGUMENTS:
-    type(clumpfilter), intent(inout) :: filter
+    type(clumpfilter), intent(inout) :: filt
     integer, intent(in) :: begp, endp            ! Patch indices
     integer, intent(in) :: begc, endc            ! Column indices
     !---------------------------------------------------------------------
 
-    allocate (filter%exposedvegp  (begp:endp))
-    allocate (filter%nolakeurbanp (begp:endp))
-    allocate (filter%nolakec      (begc:endc))
-    allocate (filter%nourbanc     (begc:endc))
-    allocate (filter%hydrologyc   (begc:endc))
+    allocate (filt%exposedvegp  (1:(endp-begp+1)))
+    allocate (filt%nolakeurbanp (1:(endp-begp+1)))
+    allocate (filt%nolakec      (1:(endc-begc+1)))
+    allocate (filt%nourbanc     (1:(endc-begc+1)))
+    allocate (filt%hydrologyc   (1:(endc-begc+1)))
 
   end subroutine allocFilters
 
   !-----------------------------------------------------------------------
-  subroutine setFilters (filter)
+  subroutine setFilters (filt, begp, begc)
     !
     ! !DESCRIPTION:
-    ! Set CLM filters
+    ! Set CLM filters for one clump.
+    !
+    ! begp / begc are the actual patch and column indices for this clump
+    ! (e.g. nc=2 -> begp=2, begc=2).  We store those values at list
+    ! position 1 so the standard "c = nolakec(f)" loop retrieves them.
     !
     ! !ARGUMENTS:
-    type(clumpfilter), intent(inout) :: filter
+    type(clumpfilter), intent(inout) :: filt
+    integer,           intent(in)    :: begp   ! first patch index for this clump
+    integer,           intent(in)    :: begc   ! first column index for this clump
     !---------------------------------------------------------------------
 
-    filter%num_nolakeurbanp = 1 ; filter%nolakeurbanp(:) = 1
-    filter%num_nolakec      = 1 ; filter%nolakec(:)      = 1
-    filter%num_nourbanc     = 1 ; filter%nourbanc(:)     = 1
-    filter%num_hydrologyc   = 1 ; filter%hydrologyc(:)   = 1
+    filt%num_nolakeurbanp = 1 ; filt%nolakeurbanp(1) = begp
+    filt%num_nolakec      = 1 ; filt%nolakec(1)      = begc
+    filt%num_nourbanc     = 1 ; filt%nourbanc(1)      = begc
+    filt%num_hydrologyc   = 1 ; filt%hydrologyc(1)    = begc
 
   end subroutine setFilters
 

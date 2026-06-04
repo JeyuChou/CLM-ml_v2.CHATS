@@ -6,7 +6,7 @@ module clm_initializeMod
   !
   ! !USES:
   use shr_kind_mod, only : r8 => shr_kind_r8
-  use decompMod, only : bounds_type
+  use decompMod, only : bounds_type, numg, get_clump_bounds
   use clm_varpar, only: clm_varpar_init
   use pftconMod, only : pftcon
   use GridcellType, only : grc
@@ -53,6 +53,10 @@ contains
     ! !ARGUMENTS:
     implicit none
     type(bounds_type), intent(in) :: bounds
+    !
+    ! !LOCAL VARIABLES:
+    type(bounds_type) :: clump_bounds
+    integer :: g
     !---------------------------------------------------------------------
 
     ! Read list of PFTs and their parameter values
@@ -75,9 +79,14 @@ contains
 
     call initGridCells
 
-    ! Allocate filters
+    ! Allocate filters — one slot per clump, each sized for its [n:n] range
 
-    call allocFilters (filter, bounds%begp, bounds%endp, bounds%begc, bounds%endc)
+    allocate(filter(numg))
+    do g = 1, numg
+       call get_clump_bounds(g, clump_bounds)
+       call allocFilters(filter(g), clump_bounds%begp, clump_bounds%endp, &
+                         clump_bounds%begc, clump_bounds%endc)
+    end do
 
     ! Initialize instances of all derived types as well as
     ! time constant variables

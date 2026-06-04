@@ -52,7 +52,11 @@ contains
     real(r8) :: tk_h2osfc(bounds%begc:bounds%endc)                 ! CLM: thermal conductivity of h2osfc (W/m/K)
     !---------------------------------------------------------------------
 
+    ! cf aliases the filter element for this clump so downstream calls use
+    ! the correct per-thread patch/column index lists.
     associate ( &
+    cf => filter(bounds%clump_index) , &
+
     snl            => col%snl                                  , &  ! Number of snow layers
     frac_veg_nosno => canopystate_inst%frac_veg_nosno_patch    , &  ! Fraction of vegetation not covered by snow (0 or 1)
     frac_sno_eff   => waterdiagnosticbulk_inst%frac_sno_eff_col, &  ! Effective fraction of ground covered by snow (0 to 1)
@@ -70,21 +74,21 @@ contains
     do p = bounds%begp, bounds%endp
        frac_veg_nosno(p) = 1
     end do
-    call setExposedvegpFilter (filter, frac_veg_nosno)
+    call setExposedvegpFilter (cf, frac_veg_nosno)
 
     ! Calculate CLM soil albedo
 
-    call SoilAlbedo (bounds, filter%num_nourbanc, filter%nourbanc, waterstatebulk_inst, surfalb_inst)
+    call SoilAlbedo (bounds, cf%num_nourbanc, cf%nourbanc, waterstatebulk_inst, surfalb_inst)
 
     ! Calculate CLM moisture stress/resistance for soil evaporation
 
-    call calc_soilevap_resis (bounds, filter%num_nolakec, filter%nolakec, &
+    call calc_soilevap_resis (bounds, cf%num_nolakec, cf%nolakec, &
     soilstate_inst, waterstatebulk_inst, temperature_inst)
 
     ! Zero out snow and surface water
 
-    do f = 1, filter%num_nolakec
-       c = filter%nolakec(f)
+    do f = 1, cf%num_nolakec
+       c = cf%nolakec(f)
        snl(c) = 0
        frac_sno_eff(c) = 0._r8
        h2osno(c) = 0._r8
@@ -95,18 +99,18 @@ contains
     ! thk(c,snl(c)+1), which is the thermal conductivity of the first
     ! snow/soil layer.
 
-    call SoilThermProp (bounds, filter%num_nolakec, filter%nolakec, tk(bounds%begc:bounds%endc,:), &
+    call SoilThermProp (bounds, cf%num_nolakec, cf%nolakec, tk(bounds%begc:bounds%endc,:), &
     cv(bounds%begc:bounds%endc,:), tk_h2osfc(bounds%begc:bounds%endc), temperature_inst, &
     waterdiagnosticbulk_inst, waterstatebulk_inst, water_inst, soilstate_inst)
 
     ! CLM hydraulic conductivity and soil matric potential
 
-    call SoilWater (bounds, filter%num_hydrologyc, filter%hydrologyc, &
+    call SoilWater (bounds, cf%num_hydrologyc, cf%hydrologyc, &
     soilstate_inst, waterstatebulk_inst)
 
     ! CLMml: Multilayer canopy and soil fluxes
 
-    call MLCanopyFluxes (bounds, filter%num_exposedvegp, filter%exposedvegp, &
+    call MLCanopyFluxes (bounds, cf%num_exposedvegp, cf%exposedvegp, &
     atm2lnd_inst, canopystate_inst, soilstate_inst, temperature_inst, &
     waterstatebulk_inst, waterfluxbulk_inst, &
     energyflux_inst, frictionvel_inst, surfalb_inst, solarabs_inst, &
@@ -119,10 +123,11 @@ contains
     ! canopy and is not the same is in CLM                        !
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    call SoilTemperature (bounds, filter%num_nolakec, filter%nolakec, &
+    call SoilTemperature (bounds, cf%num_nolakec, cf%nolakec, &
     soilstate_inst, temperature_inst, waterdiagnosticbulk_inst, &
     waterstatebulk_inst, water_inst, mlcanopy_inst)
 
+    end associate  ! cf
     end associate
   end subroutine clm_drv
 

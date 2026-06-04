@@ -37,8 +37,8 @@ contains
 
     pi = pi + 1
 
-    patch%column(pi) = 1
-    patch%gridcell(pi) = 1
+    patch%column(pi) = pi
+    patch%gridcell(pi) = pi
     patch%itype(pi) = ptype
 
   end subroutine add_patch

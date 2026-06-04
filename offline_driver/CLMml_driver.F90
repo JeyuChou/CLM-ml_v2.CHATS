@@ -2,7 +2,8 @@ module CLMml_driver
 
   !-----------------------------------------------------------------------
   ! !DESCRIPTION:
-  ! Model driver
+  ! Model driver — split into a serial global-init phase and a per-clump
+  ! simulation phase so the latter can run inside an OpenMP parallel region.
   !
   ! !USES:
   use abortutils, only : endrun
@@ -14,7 +15,8 @@ module CLMml_driver
   implicit none
   !
   ! !PUBLIC MEMBER FUNCTIONS:
-  public :: CLMml_drv             ! Model driver
+  public :: CLMml_global_init    ! Serial one-time setup (call before any parallel region)
+  public :: CLMml_run_clump      ! Per-clump simulation — thread-safe
   !
   ! !PRIVATE MEMBER FUNCTIONS:
   private :: init_acclim          ! Read tower meteorology data to get acclimation temperature
@@ -27,191 +29,188 @@ module CLMml_driver
 contains
 
   !-----------------------------------------------------------------------
-  subroutine CLMml_drv (bounds)
+  subroutine CLMml_global_init (bounds_proc, ntim, fin_tower, fin_clm, fin_soil_adjust, &
+                                 dirout, start_calday_clm, yr, mon)
     !
     ! !DESCRIPTION:
-    ! Model driver to process the tower site and year
+    ! Serial initialization: reads namelist, builds CLM data structures across
+    ! all clumps (bounds_proc spans [1:numg]), computes orbital parameters,
+    ! and derives the CLM history-file calendar offset (start_calday_clm).
+    ! Must complete before any CLMml_run_clump call.
+    !
+    ! !USES:
+    use clm_instMod
+    use clm_time_manager, only : start_date_ymd, start_date_tod, curr_date_tod, dtstep, itim
+    use clm_time_manager, only : get_curr_date, get_curr_calday
+    use clm_varorb, only : eccen, mvelpp, lambm0, obliqr
+    use controlMod, only : control
+    use lnd_comp_nuopc, only : InitializeRealize
+    use shr_orb_mod, only : shr_orb_params
+    use TowerDataMod, only : tower_id, tower_num
+    !
+    ! !ARGUMENTS:
+    implicit none
+    type(bounds_type), intent(in) :: bounds_proc         ! Proc-level bounds [1:numg]
+    integer,           intent(out) :: ntim               ! Number of time steps
+    character(len=256), intent(out) :: fin_tower         ! Tower met file
+    character(len=256), intent(out) :: fin_clm           ! CLM history file
+    character(len=256), intent(out) :: fin_soil_adjust   ! Soil moisture adjustment file
+    character(len=256), intent(out) :: dirout            ! Output directory
+    real(r8),           intent(out) :: start_calday_clm  ! Calendar day of CLM history file start
+    integer,            intent(out) :: yr                ! Year of simulation start
+    integer,            intent(out) :: mon               ! Month of simulation start
+    !
+    ! !LOCAL VARIABLES:
+    real(r8) :: obliq, mvelp
+    integer  :: day
+    integer  :: run_start_date, run_start_tod
+    integer  :: clm_start_ymd, clm_start_tod
+    !---------------------------------------------------------------------
+
+    ! Read namelist control variables
+
+    call control (ntim, clm_start_ymd, clm_start_tod, fin_tower, fin_clm, fin_soil_adjust, dirout)
+
+    ! Get simulation start year and month
+
+    itim = 1
+    call get_curr_date (yr, mon, day, curr_date_tod)
+    write (iulog,*) 'Processing: ', tower_id(tower_num), yr, mon
+
+    ! Initialize CLM data structures for all clumps
+
+    call InitializeRealize (bounds_proc)
+
+    ! Orbital parameters for this year
+
+    call shr_orb_params (yr, eccen, obliq, mvelp, obliqr, lambm0, mvelpp)
+
+    ! Compute calendar day of the first time slice in the CLM history file.
+    ! Temporarily replaces start_date with the CLM file start — serial only.
+
+    run_start_date = start_date_ymd
+    run_start_tod  = start_date_tod
+
+    start_date_ymd = clm_start_ymd
+    start_date_tod = clm_start_tod
+    itim = 1
+    start_calday_clm = get_curr_calday(offset=0)
+
+    start_date_ymd = run_start_date
+    start_date_tod = run_start_tod
+    itim = 1
+
+  end subroutine CLMml_global_init
+
+  !-----------------------------------------------------------------------
+  subroutine CLMml_run_clump (bounds, nc, ntim, fin_tower, fin_clm, fin_soil_adjust, &
+                               dirout, start_calday_clm, yr, mon)
+    !
+    ! !DESCRIPTION:
+    ! Per-clump simulation. Thread-safe: all state is accessed through
+    ! bounds%clump_index.  Output file unit numbers are deterministic
+    ! (nc*10+offset) to avoid getavu() races across threads.
     !
     ! !USES:
     use clm_instMod
     use MLclm_varctl, only : flux_profile_type, met_type
-    use clm_time_manager, only : start_date_ymd, start_date_tod, curr_date_tod, dtstep, itim
+    use clm_time_manager, only : dtstep, itim
     use clm_time_manager, only : get_curr_date, get_curr_calday, get_curr_time
-    use clm_varorb, only : eccen, mvelpp, lambm0, obliqr
-    use controlMod, only : control
-    use fileutils, only : getavu, relavu
     use filterMod, only : setFilters, filter
-    use lnd_comp_nuopc, only : InitializeRealize, ModelAdvance
+    use lnd_comp_nuopc, only : ModelAdvance
     use PatchType, only : patch
-    use shr_orb_mod, only : shr_orb_params
     use TowerDataMod, only : tower_id, tower_num
     use TowerMetMod, only : TowerMetCurr, TowerMetNext
     !
     ! !ARGUMENTS:
     implicit none
     type(bounds_type), intent(in) :: bounds
+    integer,           intent(in) :: nc               ! Clump index (= thread index)
+    integer,           intent(in) :: ntim             ! Number of time steps
+    character(len=256), intent(in) :: fin_tower
+    character(len=256), intent(in) :: fin_clm
+    character(len=256), intent(in) :: fin_soil_adjust
+    character(len=256), intent(in) :: dirout
+    real(r8),           intent(in) :: start_calday_clm
+    integer,            intent(in) :: yr, mon         ! Run start year / month (for filenames)
     !
     ! !LOCAL VARIABLES:
-    real(r8) :: obliq, mvelp                   ! Miscellaneous orbital parameters (not used)
-    integer  :: ntim                           ! Number of time steps to process
-    integer  :: itim_next                      ! Next value for itim (itim + 1)
-    integer  :: time_indx                      ! Time index for CLM history file
-    integer  :: curr_time_day                  ! Number of whole days
-    integer  :: curr_time_sec                  ! Remaining seconds in the day
-    integer  :: yr                             ! Year (1900, ...)
-    integer  :: mon                            ! Month (1, ..., 12)
-    integer  :: day                            ! Day of month (1, ..., 31)
-    real(r8) :: curr_calday                    ! Current calendar day (equals 1.000 on 0Z January 1 of current year)
-    real(r8) :: start_calday_clm               ! Calendar day at start of CLM history file
-    integer  :: run_start_date                 ! Temporary variable
-    integer  :: run_start_tod                  ! Temporary variable
-    integer  :: clm_start_ymd                  ! CLM file start date (yyyymmdd format)
-    integer  :: clm_start_tod                  ! CLM file start time-of-day (seconds past 0Z UTC)
-    integer  :: nout1,nout2,nout3,nout4,nout5  ! Fortran unit number
-    integer  :: nout6                          ! Fortran unit number
-    integer  :: nin1                           ! Fortran unit number
-
-    character(len=256) :: dirout               ! Model output file directory path
-    character(len=256) :: ext                  ! Local file name
-    character(len=256) :: fin_tower            ! Tower meteorology file name
-    character(len=256) :: fin_clm              ! CLM file name
-    character(len=256) :: fin_soil_adjust      ! Soil moisture adjustment factor file name
-    character(len=256) :: fout1, fout2         ! Full output file name, including directory path
-    character(len=256) :: fout3, fout4, fout5  ! Full output file name, including directory path
-    character(len=256) :: fout6                ! Full output file name, including directory path
-    character(len=256) :: fin1                 ! Full input file name for profile data, including directory path
+    integer  :: itim_next
+    integer  :: time_indx
+    integer  :: curr_time_day, curr_time_sec
+    integer  :: yr_loc, mon_loc, day_loc, tod_loc
+    real(r8) :: curr_calday
+    integer  :: nout1, nout2, nout3, nout4, nout5, nout6, nin1
+    character(len=256) :: ext, fout1, fout2, fout3, fout4, fout5, fout6, fin1
     !---------------------------------------------------------------------
 
-    ! Initialize namelist run control variables
+    ! Deterministic per-clump unit numbers (avoids getavu() which is not thread-safe)
 
-    call control (ntim, clm_start_ymd, clm_start_tod, fin_tower, fin_clm, fin_soil_adjust, dirout)
+    nout1 = nc*10 + 1
+    nout2 = nc*10 + 2
+    nout3 = nc*10 + 3
+    nout4 = nc*10 + 4
+    nout5 = nc*10 + 5
+    nout6 = nc*10 + 6
 
-    !---------------------------------------------------------------
-    ! Extract year (yr), month (mon), and day of month (day)
-    ! from start_date_ymd
-    !---------------------------------------------------------------
+    ! Set CLM filters for this clump
 
-    itim = 1
-    call get_curr_date (yr, mon, day, curr_date_tod)
+    call setFilters (filter(nc), bounds%begp, bounds%begc)
 
-    write (iulog,*) 'Processing: ',tower_id(tower_num),yr,mon
-
-    !---------------------------------------------------------------
-    ! Initialize CLM
-    !
-    ! NOTE:
-    ! CLM uses a subgrid hierarchy consisting of grid cell (g),
-    ! land unit (l), column (c), and patch (p). This code processes
-    ! one patch (one grid cell with one column and one patch).
-    !---------------------------------------------------------------
-
-    call InitializeRealize (bounds)
-
-    ! Build the necessary CLM filters to process patches
-
-    call setFilters (filter)
-
-    !---------------------------------------------------------------
-    ! Calculate orbital parameters for this year
-    !---------------------------------------------------------------
-
-    call shr_orb_params (yr, eccen, obliq, mvelp, obliqr, lambm0, mvelpp)
-
-    !---------------------------------------------------------------
-    ! Read tower meteorology data once to get acclimation temperature
-    !---------------------------------------------------------------
+    ! Read tower meteorology to accumulate acclimation temperature
 
     call init_acclim (fin_tower, tower_num, ntim, bounds%begp, bounds%endp, &
     atm2lnd_inst, wateratm2lndbulk_inst, temperature_inst, frictionvel_inst, mlcanopy_inst)
 
-    !---------------------------------------------------------------
     ! Initialize tower vegetation
-    !---------------------------------------------------------------
 
     call TowerVeg (tower_num, bounds%begp, bounds%endp, canopystate_inst, mlcanopy_inst)
 
-    !---------------------------------------------------------------
-    ! Read CLM history file to initialize soil temperature and
-    ! moisture profiles
-    !---------------------------------------------------------------
+    ! Find the CLM history file time index for the simulation start
 
-    ! Find calendar day of first time slice in CLM history file based on
-    ! start date (clm_start_ymd) and start time-of-day (clm_start_tod).
-    ! This is a hack because get_curr_calday uses start_date_ymd and
-    ! start_date_tod, but it works.
-
-    run_start_date = start_date_ymd             ! Save this
-    run_start_tod  = start_date_tod             ! Save this
-
-    start_date_ymd = clm_start_ymd              ! Use this to get calendar date for CLM history file
-    start_date_tod = clm_start_tod              ! Use this to get calendar date for CLM history file
-
-    itim = 1                                    ! Here, itim is the first time slice in CLM history file
-    start_calday_clm = get_curr_calday(offset=0)
-
-    ! Now find calendar day for start of the simulation run
-
-    start_date_ymd = run_start_date             ! Reset to correct value for start of run
-    start_date_tod = run_start_tod              ! Reset to correct value for start of run
-
-    itim = 1                                    ! itim is the first time step of the simulation
+    itim = 1
     curr_calday = get_curr_calday(offset=0)
-
-    ! Calculate correct time slice (number of time steps) into CLM history file
-
     time_indx = nint((curr_calday - start_calday_clm) * 86400._r8 / float(dtstep)) + 1
 
-    ! Read history file
+    ! Read CLM history file to initialize soil temperature and moisture
 
     call SoilInit (fin_clm, time_indx, bounds%begc, bounds%endc, soilstate_inst, &
     waterstatebulk_inst, temperature_inst)
 
     !---------------------------------------------------------------
-    ! Model output files for fluxes (fout1), auxillary data (fout2),
-    ! profile data (fout3), and sun/shade fluxes (fout4). These are
-    ! ascii data files and so must be opened here. Also vertical fluxes (fout5)
-    ! and soil temperature (fout6)
+    ! Open per-clump output files.  Filenames include clump index nc
+    ! so parallel runs produce distinct files without collisions.
     !---------------------------------------------------------------
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_flux.out")') tower_id(tower_num),yr,mon
-    fout1 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
-    nout1 = getavu()
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_c",i2.2,"_flux.out")') tower_id(tower_num),yr,mon,nc
+    fout1 = trim(dirout)//trim(ext)
     open (unit=nout1, file=trim(fout1), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_aux.out")') tower_id(tower_num),yr,mon
-    fout2 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
-    nout2 = getavu()
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_c",i2.2,"_aux.out")') tower_id(tower_num),yr,mon,nc
+    fout2 = trim(dirout)//trim(ext)
     open (unit=nout2, file=trim(fout2), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_profile.out")') tower_id(tower_num),yr,mon
-    fout3 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
-    nout3 = getavu()
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_c",i2.2,"_profile.out")') tower_id(tower_num),yr,mon,nc
+    fout3 = trim(dirout)//trim(ext)
     open (unit=nout3, file=trim(fout3), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_fsun.out")') tower_id(tower_num),yr,mon
-    fout4 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
-    nout4 = getavu()
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_c",i2.2,"_fsun.out")') tower_id(tower_num),yr,mon,nc
+    fout4 = trim(dirout)//trim(ext)
     open (unit=nout4, file=trim(fout4), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_fluxprofile.out")') tower_id(tower_num),yr,mon
-    fout5 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
-    nout5 = getavu()
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_c",i2.2,"_fluxprofile.out")') tower_id(tower_num),yr,mon,nc
+    fout5 = trim(dirout)//trim(ext)
     open (unit=nout5, file=trim(fout5), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_soiltemp.out")') tower_id(tower_num),yr,mon
-    fout6 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
-    nout6 = getavu()
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_c",i2.2,"_soiltemp.out")') tower_id(tower_num),yr,mon,nc
+    fout6 = trim(dirout)//trim(ext)
     open (unit=nout6, file=trim(fout6), action="write")
-
-    !---------------------------------------------------------------
-    ! Open ascii profile data input file if desired
-    !---------------------------------------------------------------
 
     if (flux_profile_type .eq. -1) then
        call endrun (msg=' ERROR: flux_profile_type not supported')
+       nin1 = nc*10 + 7
        write (ext,'(a6,"_",i4.4,"-",i2.2,"_profile.out")') tower_id(tower_num),yr,mon
        fin1 = 'set_file_name'
-       nin1 = getavu()
        open (unit=nin1, file=trim(fin1), action="read")
     end if
 
@@ -219,78 +218,53 @@ contains
     ! Time stepping loop
     !---------------------------------------------------------------
 
-    write (iulog,*) 'Starting time stepping loop .....'
+    write (iulog,*) 'Starting time stepping loop (clump ', nc, ') .....'
 
     do itim = 1, ntim
 
-       ! Get current date, time, and calendar day. These are for itim (at
-       ! end of the time step). 
-       !
-       ! itim = time index from start date
-       ! curr_calday = current calendar day (equal to 1.000 on 0Z January 1 of current year)
+       ! yr_loc/mon_loc/day_loc/tod_loc are local; avoids writing to the shared
+       ! curr_date_tod module variable from multiple threads simultaneously.
 
-       call get_curr_date (yr, mon, day, curr_date_tod)
+       call get_curr_date (yr_loc, mon_loc, day_loc, tod_loc)
        call get_curr_time (curr_time_day, curr_time_sec)
        curr_calday = get_curr_calday(offset=0)
 
-       ! Calculate correct time slice (number of time steps) into CLM history file
-
        time_indx = nint((curr_calday - start_calday_clm) * 86400._r8 / float(dtstep)) + 1
-
-       ! Read tower meteorology for current time slice
 
        call TowerMetCurr (fin_tower, itim, tower_num, bounds%begp, bounds%endp, atm2lnd_inst, &
        wateratm2lndbulk_inst, frictionvel_inst)
-
-       ! Read tower meteorology for next time slice. This is needed for the 3-point time
-       ! interpolation of atmospheric forcing from the CLM timestep to the multilayer canopy timestep.
 
        if (met_type == 3) then
           itim_next = min(itim+1, ntim)
           call TowerMetNext (fin_tower, itim_next, bounds%begp, bounds%endp, mlcanopy_inst)
        end if
 
-       ! Read T,Q,U profile data for current time step
-
        if (flux_profile_type .eq. -1) call ReadCanopyProfiles (itim, curr_calday, nin1, mlcanopy_inst)
 
-       ! Call model to calculate fluxes (as in CLM)
-
        call ModelAdvance (bounds, time_indx, fin_clm, fin_soil_adjust)
-       if (itim == 1) write (iulog,*) 'Executing model .....'
+       if (itim == 1) write (iulog,*) 'Executing model (clump ', nc, ') .....'
 
-       ! Write output files
-
-       call output (curr_calday, tower_num, nout1, nout2, nout3, nout4, nout5, nout6, &
-       mlcanopy_inst, temperature_inst)
+       call output (curr_calday, tower_num, bounds%begp, bounds%begc, &
+       nout1, nout2, nout3, nout4, nout5, nout6, mlcanopy_inst, temperature_inst)
 
     end do
 
     !---------------------------------------------------------------
-    ! Close ascii output and input files
+    ! Close output files
     !---------------------------------------------------------------
 
     close (nout1)
-    call relavu (nout1)
     close (nout2)
-    call relavu (nout2)
     close (nout3)
-    call relavu (nout3)
     close (nout4)
-    call relavu (nout4)
     close (nout5)
-    call relavu (nout5)
     close (nout6)
-    call relavu (nout6)
 
-    if (flux_profile_type .eq. -1) then
-       close (nin1)
-       call relavu (nin1)
-    end if
+    if (flux_profile_type .eq. -1) close (nin1)
 
-    write (iulog,*) 'Successfully finished simulation'
+    write (iulog,*) 'Successfully finished simulation (clump ', nc, ')'
 
-  end subroutine CLMml_drv
+  end subroutine CLMml_run_clump
 
   !-----------------------------------------------------------------------
   subroutine init_acclim (fin, tower_num, ntim, begp, endp, &
@@ -323,7 +297,7 @@ contains
     ! !LOCAL VARIABLES:
     integer  :: p                           ! Patch index for CLM g/l/c/p hierarchy
     integer  :: c                           ! Column index for CLM g/l/c/p hierarchy
-    integer  :: itim                        ! Time index
+    integer  :: itim                        ! Local time index (shadows module var intentionally)
     !---------------------------------------------------------------------
 
     associate ( &
@@ -497,7 +471,7 @@ contains
     h2osoi_liq  => waterstatebulk_inst%h2osoi_liq_col  &  ! CLM: Soil layer liquid water (kg H2O/m2)
     )
 
-    ! Open file
+    ! Open file — nf_nowrite allows concurrent readers from multiple threads
 
     status = nf_open(ncfilename, nf_nowrite, ncid)
     if (status /= nf_noerr) call handle_err(status, ncfilename)
@@ -581,7 +555,7 @@ contains
   end subroutine SoilInit
 
   !-----------------------------------------------------------------------
-  subroutine output (curr_calday, it, nout1, nout2, nout3, nout4, nout5, nout6, &
+  subroutine output (curr_calday, it, begp, begc, nout1, nout2, nout3, nout4, nout5, nout6, &
   mlcan, temperature_inst)
     !
     ! !DESCRIPTION:
@@ -604,6 +578,8 @@ contains
     implicit none
     real(r8), intent(in) :: curr_calday  ! Current calendar day
     integer, intent(in)  :: it           ! Tower index: Tower name is tower_id(it)
+    integer, intent(in)  :: begp         ! First patch index for this clump
+    integer, intent(in)  :: begc         ! First column index for this clump
     integer, intent(in)  :: nout1        ! Fortran unit number for output files
     integer, intent(in)  :: nout2        ! Fortran unit number for output files
     integer, intent(in)  :: nout3        ! Fortran unit number for output files
@@ -618,6 +594,7 @@ contains
     integer  :: top                    ! Top canopy layer index
     integer  :: mid                    ! Mid-canopy layer index
     integer  :: p                      ! Patch index for CLM g/l/c/p hierarchy
+    integer  :: c                      ! Column index for CLM g/l/c/p hierarchy
     real(r8) :: swup                   ! Reflected solar radiation (W/m2)
     real(r8) :: tair                   ! Air temperature (K)
     real(r8) :: qair                   ! Specific humidity (g/kg)
@@ -635,7 +612,8 @@ contains
     missing_value = -999._r8
     zero_value = 0._r8
 
-    p = 1
+    p = begp
+    c = begc
 
     ! Adjust calendar used for output
 
@@ -764,7 +742,6 @@ contains
           missing_value, missing_value, &
           missing_value, missing_value, &
           missing_value, missing_value, &
-          missing_value, missing_value, &
           mlcan%wind_profile(p,ic), tair, qair, ra
        end if
 
@@ -798,7 +775,7 @@ contains
     ! -----------------------------------------------
 
     write (nout6,'(f12.7,20f10.3)') time_stamp, &
-    (col%z(1,ic),temperature_inst%t_soisno_col(1,ic),ic=1,10)
+    (col%z(c,ic),temperature_inst%t_soisno_col(c,ic),ic=1,10)
 
   end subroutine output
 
@@ -843,7 +820,7 @@ contains
     eair_data      => mlcanopy_inst%eair_data_profile       &  ! Canopy layer vapor pressure FROM DATASET (Pa)
     )
 
-    ! Hardwired for one patch
+    ! Hardwired for one patch (flux_profile_type == -1 path is not thread-safe; it calls endrun)
 
     p = 1
 

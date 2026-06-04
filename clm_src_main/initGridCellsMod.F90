@@ -40,18 +40,23 @@ contains
     ! Initialize vegetated landunit with competition
     !
     ! !USES:
+    use decompMod,    only : numg
     use TowerDataMod, only : tower_pft, tower_num
     use initSubgridMod, only : add_patch
     !
     ! !LOCAL VARIABLES:
     integer :: pi     ! patch index
+    integer :: g      ! grid cell loop index
     !---------------------------------------------------------------------
 
-    ! The code (as used here) processes one patch (one grid cell with one
-    ! column and one patch) and the subgrid patch structure is set accordingly.
+    ! Loop over all numg grid cells.  Each call to add_patch increments pi
+    ! and wires patch pi -> column pi -> gridcell pi (see initSubgridMod).
+    ! All cells use the same tower PFT for the baseline parallelism test.
 
     pi = 0
-    call add_patch (pi, tower_pft(tower_num))
+    do g = 1, numg
+       call add_patch (pi, tower_pft(tower_num))
+    end do
 
   end subroutine set_landunit_veg_compete
 
