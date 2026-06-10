@@ -20,7 +20,7 @@ module lnd_comp_nuopc
 contains
 
   !-----------------------------------------------------------------------
-  subroutine InitializeRealize (bounds)
+  subroutine InitializeRealize (bounds,isite)
     !
     ! !DESCRIPTION:
     ! Initialize land surface model
@@ -31,10 +31,13 @@ contains
     ! !ARGUMENTS:
     implicit none
     type(bounds_type), intent(in) :: bounds
+    !integer, intent(in) :: isite
+    !Add different sites
+    integer, intent(in) :: isite
     !---------------------------------------------------------------------
 
     call initialize1 ()
-    call initialize2 (bounds)
+    call initialize2 (bounds,isite)
 
   end subroutine InitializeRealize
 

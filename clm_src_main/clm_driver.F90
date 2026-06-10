@@ -61,7 +61,7 @@ contains
     )
 
     ! Read CLM data for current time slice
-
+    print *, 'LChou: Please tell me its here'
     call clmData (fin1, fin2, time_indx, bounds%begp, bounds%endp, bounds%begc, bounds%endc, &
     soilstate_inst, waterstatebulk_inst, canopystate_inst, surfalb_inst)
 

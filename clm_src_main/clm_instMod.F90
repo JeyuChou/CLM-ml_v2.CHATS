@@ -59,20 +59,21 @@ module clm_instMod
 contains
 
   !-----------------------------------------------------------------------
-  subroutine clm_instInit (bounds)
+  subroutine clm_instInit (bounds, isite)
     !
     ! !DESCRIPTION:
     ! Initialization of public data types
     !
     ! !ARGUMENTS:
     type(bounds_type), intent(in) :: bounds
+    integer, intent(in) :: isite
     !---------------------------------------------------------------------
 
-    call initVertical                  (bounds)
+    call initVertical                  (bounds, isite)
     call atm2lnd_inst%Init             (bounds)
     call wateratm2lndbulk_inst%Init    (bounds)
     call soilstate_inst%Init           (bounds)
-    call SoilStateInitTimeConst        (bounds, soilstate_inst)
+    call SoilStateInitTimeConst        (bounds, isite, soilstate_inst)
     call water_inst%Init               (bounds)
     call waterstatebulk_inst%Init      (bounds)
     call waterfluxbulk_inst%Init       (bounds)
@@ -83,7 +84,7 @@ contains
     call frictionvel_inst%Init         (bounds)
     call surfalb_inst%Init             (bounds)
     call solarabs_inst%Init            (bounds)
-    call SurfaceAlbedoInitTimeConst    (bounds)
+    call SurfaceAlbedoInitTimeConst    (bounds, isite)
     call mlcanopy_inst%Init            (bounds) !!! CLMml !!!
 
   end subroutine clm_instInit

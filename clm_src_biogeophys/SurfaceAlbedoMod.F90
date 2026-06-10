@@ -26,7 +26,7 @@ module SurfaceAlbedoMod
 contains
 
   !-----------------------------------------------------------------------
-  subroutine SurfaceAlbedoInitTimeConst (bounds)
+  subroutine SurfaceAlbedoInitTimeConst (bounds,isite)
     !
     ! !DESCRIPTION:
     ! Initialize module time constant variables
@@ -34,7 +34,8 @@ contains
     ! !USES:
     use clm_varpar, only : numrad, ivis, inir
     use abortutils, only : endrun
-    use TowerDataMod, only : tower_isoicol, tower_num
+    use TowerDataMod, only : tower_isoicol
+    integer, intent(in) :: isite
     !
     ! !ARGUMENTS:
     type(bounds_type), intent(in) :: bounds   ! CLM column bounds
@@ -50,7 +51,7 @@ contains
     begc = bounds%begc ; endc = bounds%endc
     allocate (isoicol(begc:endc))
     do c = begc, endc
-       isoicol(c) = tower_isoicol(tower_num)
+       isoicol(c) = tower_isoicol(isite)
     end do
 
     ! Set saturated and dry soil albedos for mxsoil_color color classes

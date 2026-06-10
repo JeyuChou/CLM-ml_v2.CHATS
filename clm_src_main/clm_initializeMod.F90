@@ -45,7 +45,7 @@ contains
   end subroutine initialize1
 
   !-----------------------------------------------------------------------
-  subroutine initialize2 (bounds)
+  subroutine initialize2 (bounds, isite)
     !
     ! !DESCRIPTION:
     ! CLM initialization - second phase 
@@ -53,6 +53,7 @@ contains
     ! !ARGUMENTS:
     implicit none
     type(bounds_type), intent(in) :: bounds
+    integer, intent(in) :: isite
     !---------------------------------------------------------------------
 
     ! Read list of PFTs and their parameter values
@@ -73,7 +74,7 @@ contains
 
     ! Build subgrid hierarchy of landunit, column, and patch
 
-    call initGridCells
+    call initGridCells(isite)
 
     ! Allocate filters
 
@@ -82,7 +83,7 @@ contains
     ! Initialize instances of all derived types as well as
     ! time constant variables
 
-    call clm_instInit (bounds)
+    call clm_instInit (bounds, isite)
 
   end subroutine initialize2
 

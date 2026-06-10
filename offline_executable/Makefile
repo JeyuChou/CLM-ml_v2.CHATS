@@ -6,8 +6,8 @@
 # To remove obj files and mod files: type 'make clean'
 # ###############################################
  
-LIB_NETCDF = $(NETCDF_PATH)/lib
-MOD_NETCDF = $(NETCDF_PATH)/include
+LIB_NETCDF = $(NCAR_LDFLAGS_NETCDF)
+MOD_NETCDF = $(NCAR_INC_NETCDF)
  
 # Source code directories
  
@@ -29,7 +29,7 @@ prgm = prgm.exe
 
 # Fortran 95 compiler
 
-cmplr = nvfortran -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
+cmplr = nvfortran -mp -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
 #cmplr = nvfortran -O2 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
 
 # Specify module files (that all other files use). Order matters, because some files

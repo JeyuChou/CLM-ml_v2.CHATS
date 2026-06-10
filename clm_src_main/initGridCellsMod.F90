@@ -20,7 +20,7 @@ module initGridCellsMod
 contains
 
   !-----------------------------------------------------------------------
-  subroutine initGridcells
+  subroutine initGridcells(isite)
     !
     ! !DESCRIPTION:
     ! Initialize sub-grid mapping and allocate space for derived type hierarchy.
@@ -29,19 +29,21 @@ contains
 
     ! Determine naturally vegetated landunit
 
-    call set_landunit_veg_compete
+    integer, intent(in) :: isite
+    call set_landunit_veg_compete(isite)
 
   end subroutine initGridcells
 
   !-----------------------------------------------------------------------
-  subroutine set_landunit_veg_compete
+  subroutine set_landunit_veg_compete(isite)
     !
     ! !DESCRIPTION:
     ! Initialize vegetated landunit with competition
     !
     ! !USES:
-    use TowerDataMod, only : tower_pft, tower_num
+    use TowerDataMod, only : tower_pft
     use initSubgridMod, only : add_patch
+    integer, intent(in) :: isite
     !
     ! !LOCAL VARIABLES:
     integer :: pi     ! patch index
@@ -51,7 +53,7 @@ contains
     ! column and one patch) and the subgrid patch structure is set accordingly.
 
     pi = 0
-    call add_patch (pi, tower_pft(tower_num))
+    call add_patch (pi, tower_pft(isite))
 
   end subroutine set_landunit_veg_compete
 

@@ -23,7 +23,7 @@ module SoilStateInitTimeConstMod
 contains
 
   !-----------------------------------------------------------------------
-  subroutine SoilStateInitTimeConst (bounds, soilstate_inst)
+  subroutine SoilStateInitTimeConst (bounds, isite, soilstate_inst)
     !
     ! !DESCRIPTION:
     ! Initialize module time constant variables
@@ -32,13 +32,16 @@ contains
     use clm_varcon, only : csol_bedrock
     use clm_varpar, only : nlevsoi, nlevgrnd
     use clm_varctl, only : iulog
-    use TowerDataMod, only : tower_num, tower_tex, tower_clay, tower_sand, tower_organic
+    use TowerDataMod, only : tower_tex, tower_clay, tower_sand, tower_organic
     use SoilTexMod
+    
     !
     ! !ARGUMENTS:
     implicit none
     type(bounds_type), intent(in) :: bounds
+    integer, intent(in) :: isite
     type(soilstate_type), intent(out) :: soilstate_inst
+    !integer, intent(in) :: isite
     !
     ! !LOCAL VARIABLES:
     integer :: p                                       ! Patch index for CLM g/l/c/p hierarchy
@@ -132,17 +135,17 @@ contains
 
        ! Organic matter fraction
 
-       om_frac = tower_organic(tower_num) / organic_max
+       om_frac = tower_organic(isite) / organic_max
 
        ! Use tower site clay and sand (if they are specified) to calculate
        ! hydraulic and thermal properties. Otherwise, obtain them from the
        ! specified soil texture.
 
-       if (tower_clay(tower_num) >= 0._r8 .and. tower_sand(tower_num) >= 0._r8) then
+       if (tower_clay(isite) >= 0._r8 .and. tower_sand(isite) >= 0._r8) then
 
           tex = 0
-          clay = tower_clay(tower_num)
-          sand = tower_sand(tower_num)
+          clay = tower_clay(isite)
+          sand = tower_sand(isite)
 
        else
 
@@ -150,7 +153,7 @@ contains
 
           tex = 0
           do m = 1, ntex
-             if (tower_tex(tower_num) == soil_tex(m)) then
+             if (tower_tex(isite) == soil_tex(m)) then
                 tex = m
                 exit
              else
@@ -158,7 +161,7 @@ contains
              end if
           end do
           if (tex == 0) then
-             write (iulog,*) ' ERROR: SoilStateInitTimeConst: soil type = ',tower_tex(tower_num), ' not found for c = ',c
+             write (iulog,*) ' ERROR: SoilStateInitTimeConst: soil type = ',tower_tex(isite), ' not found for c = ',c
              call endrun()
           end if
 

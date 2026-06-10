@@ -20,7 +20,7 @@ module initVerticalMod
 contains
 
   !-----------------------------------------------------------------------
-  subroutine initVertical (bounds)
+  subroutine initVertical (bounds, isite)
     !
     ! !DESCRIPTION:
     ! Initialization
@@ -29,11 +29,13 @@ contains
     use clm_varpar, only : nlevsoi, nlevgrnd
     use clm_varcon, only: zmin_bedrock
     use clmSoilOptionMod, only : clm_phys
-    use TowerDataMod, only : tower_num, tower_zbed
+    use TowerDataMod, only : tower_zbed
+    
     !
     ! !ARGUMENTS:
     implicit none
     type(bounds_type), intent(in) :: bounds
+    integer, intent(in) :: isite
     !
     ! !LOCAL VARIABLES:
     integer  :: c                     ! Column index for CLM g/l/c/p hierarchy
@@ -130,7 +132,7 @@ contains
 
        ! Get depth to bedrock for the tower site
 
-       zbedrock = tower_zbed(tower_num)
+       zbedrock = tower_zbed(isite)
 
        ! Determine minimum index of minimum soil depth
 
