@@ -1,14 +1,11 @@
 program CLMml
 
-  use decompMod, only : bounds_type, get_clump_bounds
+  use decompMod, only : bounds_type, get_clump_bounds, decompInit, nclumps
   use CLMml_driver, only : CLMml_drv
   implicit none
-  integer :: nc, nclumps
-  
+  integer :: nc
 
   type(bounds_type) :: bounds
-
-  nclumps=1
 
   ! Define grid cell (g), land unit (l), column (c), and patch (p) bounds
   ! for CLM g/l/c/p hierarchy. CLM processes clumps of gridcells and
@@ -18,7 +15,7 @@ program CLMml
   ! processes a single grid cell.
 
   
-  !call decompInit(ntower)
+  call decompInit()
   !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
   do nc = 1, nclumps
       call get_clump_bounds (nc, bounds)

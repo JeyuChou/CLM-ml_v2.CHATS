@@ -9,6 +9,13 @@ module decompMod
   use shr_kind_mod, only : r8 => shr_kind_r8
   implicit none
 
+  !clump is a group of sites on one processor
+
+  integer:: nclumps
+
+  
+  
+
   type bounds_type
      integer :: begg, endg       ! Beginning and ending gridcell index
      integer :: begl, endl       ! Beginning and ending landunit index
@@ -17,7 +24,38 @@ module decompMod
   end type bounds_type
   public bounds_type
 
+  type, public :: clump_type
+    integer :: begg, endg
+    integer :: begl, endl
+    integer :: begc, endc
+    integer :: begp, endp
+  end type clump_type
+
+  type(clump_type), public, allocatable :: clumps(:)
+
+  
+
 contains
+!Crude implementation of decompInit. No MPI
+  subroutine decompInit()
+    
+    integer ::n
+
+    !SET FOR 1 FOR NOW; CHECK FOR HOW MANY PROCESSORS LATER
+    nclumps = 1
+    !CHANGE LATER
+
+    allocate(clumps(nclumps))
+
+    
+
+    do n=1, nclumps
+      clumps(n)%begg = n; clumps(n)%endg = n
+      clumps(n)%begl = n; clumps(n)%endl = n
+      clumps(n)%begc = n; clumps(n)%endc = n
+      clumps(n)%begp = n; clumps(n)%endp = n
+    end do
+  end subroutine decompInit
 
   subroutine get_clump_bounds (n, bounds)
 
