@@ -3,7 +3,7 @@ program CLMml
   use decompMod, only : bounds_type, get_clump_bounds, decompInit, nclumps
   use CLMml_driver, only : CLMml_drv
   implicit none
-  integer :: nc
+  integer :: nc, itow
 
   type(bounds_type) :: bounds
 
@@ -14,13 +14,15 @@ program CLMml
   ! that a grid cell has one land unit with one column and one patch. It
   ! processes a single grid cell.
 
-  
   call decompInit()
-  !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
-  do nc = 1, nclumps
-      call get_clump_bounds (nc, bounds)
-      call CLMml_drv (bounds)
+
+  do itow = 1, 1              ! Tower loop: placeholder; bump to ntower in Commit 3
+    !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
+    do nc = 1, nclumps
+        call get_clump_bounds (nc, bounds)
+        call CLMml_drv (bounds)
+    end do
+    !$OMP END PARALLEL DO
   end do
-  !$OMP END PARALLEL DO
 
 end program CLMml
