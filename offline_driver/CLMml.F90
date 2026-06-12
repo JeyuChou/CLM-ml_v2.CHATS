@@ -2,6 +2,7 @@ program CLMml
 
   use decompMod, only : bounds_type, get_clump_bounds, decompInit, nclumps
   use CLMml_driver, only : CLMml_drv
+  use TowerDataMod, only : ntower
   implicit none
   integer :: nc, itow
 
@@ -16,7 +17,8 @@ program CLMml
 
   call decompInit()
 
-  do itow = 1, 1              ! Tower loop: placeholder; bump to ntower in Commit 3
+  do itow = 1, ntower         ! One iteration per tower; each reads next namelist block from stdin
+    write(*,*) '--- Tower loop: iteration ', itow, ' of ', ntower, ' ---'
     !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
     do nc = 1, nclumps
         call get_clump_bounds (nc, bounds)

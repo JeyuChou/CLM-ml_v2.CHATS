@@ -53,6 +53,7 @@ module clm_instMod
   type(mlcanopy_type)            :: mlcanopy_inst !!! CLMml !!!
 
   public :: clm_instInit     ! Initialize
+  public :: clm_instReset    ! Re-set per-tower values (no re-allocation)
   public :: clm_instRest     ! Setup restart
   !-----------------------------------------------------------------------
 
@@ -87,6 +88,42 @@ contains
     call mlcanopy_inst%Init            (bounds) !!! CLMml !!!
 
   end subroutine clm_instInit
+
+  !-----------------------------------------------------------------------
+  subroutine clm_instReset (bounds)
+    !
+    ! !DESCRIPTION:
+    ! Re-set per-tower values in already-allocated arrays for a new tower_num.
+    ! Called instead of clm_instInit for the second and subsequent tower runs.
+    ! Does NOT allocate anything — arrays were allocated by clm_instInit.
+    !
+    ! !USES:
+    use TowerDataMod, only : tower_num, tower_pft
+    use PatchType, only : patch
+    !
+    ! !ARGUMENTS:
+    implicit none
+    type(bounds_type), intent(in) :: bounds
+    !
+    ! !LOCAL VARIABLES:
+    integer :: p
+    !---------------------------------------------------------------------
+
+    ! Update patch PFT for the new tower
+    do p = bounds%begp, bounds%endp
+       patch%itype(p) = tower_pft(tower_num)
+    end do
+
+    ! Re-set soil layer structure and bedrock depth for the new tower
+    call initVertical              (bounds)
+
+    ! Re-set soil hydraulic and thermal properties for the new tower
+    call SoilStateInitTimeConst    (bounds, soilstate_inst)
+
+    ! Re-set soil color class for the new tower (albedo lookup tables unchanged)
+    call SurfaceAlbedoInitTimeConst(bounds)
+
+  end subroutine clm_instReset
 
   !-----------------------------------------------------------------------
   subroutine clm_instRest (bounds, ncid, flag)

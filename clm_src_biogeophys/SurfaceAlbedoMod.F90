@@ -48,7 +48,7 @@ contains
     ! Allocate module variable for soil color and assign value
 
     begc = bounds%begc ; endc = bounds%endc
-    allocate (isoicol(begc:endc))
+    if (.not. allocated(isoicol)) allocate (isoicol(begc:endc))
     do c = begc, endc
        isoicol(c) = tower_isoicol(tower_num)
     end do
@@ -57,9 +57,11 @@ contains
     ! and numrad wavebands (1=vis, 2=nir)
 
     mxsoil_color = 20
-    allocate (albsat(mxsoil_color,numrad), albdry(mxsoil_color,numrad), stat=ier)
-    if (ier /= 0) then
-       call endrun (msg=' ERROR: SurfaceAlbedoInitTimeConst: allocation error for albsat, albdry')
+    if (.not. allocated(albsat)) then
+       allocate (albsat(mxsoil_color,numrad), albdry(mxsoil_color,numrad), stat=ier)
+       if (ier /= 0) then
+          call endrun (msg=' ERROR: SurfaceAlbedoInitTimeConst: allocation error for albsat, albdry')
+       end if
     end if
 
     if (mxsoil_color == 8) then

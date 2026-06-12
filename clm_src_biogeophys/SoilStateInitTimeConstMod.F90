@@ -38,7 +38,7 @@ contains
     ! !ARGUMENTS:
     implicit none
     type(bounds_type), intent(in) :: bounds
-    type(soilstate_type), intent(out) :: soilstate_inst
+    type(soilstate_type), intent(inout) :: soilstate_inst
     !
     ! !LOCAL VARIABLES:
     integer :: p                                       ! Patch index for CLM g/l/c/p hierarchy

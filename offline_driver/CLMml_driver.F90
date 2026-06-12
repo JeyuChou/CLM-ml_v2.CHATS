@@ -16,6 +16,8 @@ module CLMml_driver
   ! !PUBLIC MEMBER FUNCTIONS:
   public :: CLMml_drv             ! Model driver
   !
+  logical, save :: clm_initialized = .false.  ! True after first call to CLMml_drv
+  !
   ! !PRIVATE MEMBER FUNCTIONS:
   private :: init_acclim          ! Read tower meteorology data to get acclimation temperature
   private :: TowerVeg             ! Initialize tower vegetation
@@ -41,6 +43,7 @@ contains
     use controlMod, only : control
     use fileutils, only : getavu, relavu
     use filterMod, only : setFilters, filter
+    use clm_instMod, only : clm_instReset
     use lnd_comp_nuopc, only : InitializeRealize, ModelAdvance
     use PatchType, only : patch
     use shr_orb_mod, only : shr_orb_params
@@ -105,11 +108,14 @@ contains
     ! one patch (one grid cell with one column and one patch).
     !---------------------------------------------------------------
 
-    call InitializeRealize (bounds)
-
-    ! Build the necessary CLM filters to process patches
-
-    call setFilters (filter)
+    if (.not. clm_initialized) then
+       call InitializeRealize (bounds)
+       call setFilters (filter)
+       clm_initialized = .true.
+    else
+       call clm_instReset (bounds)
+       call setFilters (filter)
+    end if
 
     !---------------------------------------------------------------
     ! Calculate orbital parameters for this year
