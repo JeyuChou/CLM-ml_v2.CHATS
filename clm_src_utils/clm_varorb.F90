@@ -17,5 +17,6 @@ module clm_varorb
   real(r8) :: obliqr  ! Earth's obliquity in radians
   real(r8) :: lambm0  ! Mean longitude of perihelion at the vernal equinox (radians)
   real(r8) :: mvelpp  ! Earth's moving vernal equinox longitude of perihelion plus pi (radians)
+  !$OMP THREADPRIVATE(eccen, obliqr, lambm0, mvelpp)
 
 end module clm_varorb

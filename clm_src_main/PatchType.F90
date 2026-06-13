@@ -109,6 +109,7 @@ module PatchType
 
   end type patch_type
   type(patch_type), public, target :: patch
+  !$OMP THREADPRIVATE(patch)
   !-----------------------------------------------------------------------
 
 contains

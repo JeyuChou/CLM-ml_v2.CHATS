@@ -1,30 +1,28 @@
 program CLMml
 
-  use decompMod, only : bounds_type, get_clump_bounds, decompInit, nclumps
+  use decompMod,    only : bounds_type, get_clump_bounds, decompInit, nclumps
   use CLMml_driver, only : CLMml_drv
-  use TowerDataMod, only : ntower
+  use TowerDataMod, only : ntower, tower_id, tower_num
+  use abortutils,   only : tower_error_flag, tower_error_msg, reset_tower_error
+  use controlMod,   only : tower_config_type, read_all_configs
   implicit none
-  integer :: nc, itow
+  integer :: nc
 
-  type(bounds_type) :: bounds
+  type(bounds_type)        :: bounds
+  type(tower_config_type)  :: configs(ntower)
 
-  ! Define grid cell (g), land unit (l), column (c), and patch (p) bounds
-  ! for CLM g/l/c/p hierarchy. CLM processes clumps of gridcells and
-  ! associated subgrid-scale entities, each with length defined by
-  ! begg/endg, begl/endl, begc/endc, and begp/endp. This code assumes
-  ! that a grid cell has one land unit with one column and one patch. It
-  ! processes a single grid cell.
+  ! Read all ntower namelist blocks from stdin sequentially, before any threads start.
+  ! This is necessary because stdin cannot be read safely from multiple threads at once.
+  call read_all_configs(configs, ntower)
 
-  call decompInit()
+  ! One clump per tower — each OMP thread will process one tower at a time
+  call decompInit(ntower)
 
-  do itow = 1, ntower         ! One iteration per tower; each reads next namelist block from stdin
-    write(*,*) '--- Tower loop: iteration ', itow, ' of ', ntower, ' ---'
-    !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
-    do nc = 1, nclumps
-        call get_clump_bounds (nc, bounds)
-        call CLMml_drv (bounds)
-    end do
-    !$OMP END PARALLEL DO
+  !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
+  do nc = 1, ntower
+    call get_clump_bounds(nc, bounds)
+    call CLMml_drv(bounds, configs(nc))
   end do
+  !$OMP END PARALLEL DO
 
 end program CLMml

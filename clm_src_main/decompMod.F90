@@ -36,20 +36,16 @@ module decompMod
   
 
 contains
-!Crude implementation of decompInit. No MPI
-  subroutine decompInit()
-    
-    integer ::n
+  subroutine decompInit(n_clumps)
 
-    !SET FOR 1 FOR NOW; CHECK FOR HOW MANY PROCESSORS LATER
-    nclumps = 1
-    !CHANGE LATER
+    integer, intent(in) :: n_clumps   ! Number of clumps (= ntower for parallel tower runs)
+    integer :: n
 
+    nclumps = n_clumps
+    if (allocated(clumps)) deallocate(clumps)
     allocate(clumps(nclumps))
 
-    
-
-    do n=1, nclumps
+    do n = 1, nclumps
       clumps(n)%begg = n; clumps(n)%endg = n
       clumps(n)%begl = n; clumps(n)%endl = n
       clumps(n)%begc = n; clumps(n)%endc = n

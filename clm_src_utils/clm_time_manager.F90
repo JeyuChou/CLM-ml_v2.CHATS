@@ -66,6 +66,8 @@ module clm_time_manager
   integer  :: curr_date_ymd   ! Year, month and day at the end of the current timestep in yyyymmdd format (e.g., 19960701)
   integer  :: curr_date_tod   ! Time of day (UTC) at the end of the current timestep (seconds past 0Z)
 
+  !$OMP THREADPRIVATE(dtstep, itim, start_date_ymd, start_date_tod, curr_date_ymd, curr_date_tod)
+
   ! Calendary type (NOLEAP or GREGORIAN)
 
   character(len=10), parameter :: calkindflag = 'GREGORIAN'

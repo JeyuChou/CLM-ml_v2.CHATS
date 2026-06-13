@@ -65,11 +65,12 @@ module MLclm_varctl
   ! The next variables can also be set in the clmML_inparm namelist (when uncoupled to CLM).
   ! These are the default settings. Tower-specific settings are found in the tower namelist file.
 
-  integer  :: met_type = 0                ! Meteorological forcing for multilayer canopy timestep: 
+  integer  :: met_type = 0                ! Meteorological forcing for multilayer canopy timestep:
                                           ! 0 = no interpolation (uses standard CLM calendar)
                                           ! 2 = 2-point interpolation (not supported)
                                           ! 3 = 3-point interpolation (time is centered in timestep as in CHATS)
   real(r8) :: dpai_min = 0.01_r8          ! Minimum plant area index (normalized) to be considered a vegetation layer (m2/m2)
   integer  :: pftcon_val = 0              ! PFT parameters: use default values (0) or override for CHATS (1)
+  !$OMP THREADPRIVATE(met_type, dpai_min, pftcon_val, ml_vert_init)
 
 end module MLclm_varctl

@@ -38,6 +38,7 @@ module pftconMod
   end type pftcon_type
 
   type(pftcon_type), public :: pftcon
+  !$OMP THREADPRIVATE(pftcon)
   !-----------------------------------------------------------------------
 
 contains

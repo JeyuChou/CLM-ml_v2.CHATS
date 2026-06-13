@@ -12,5 +12,6 @@ module clmSoilOptionMod
 
   character(len=6) :: clm_phys  ! CLM snow/soil layers. Options: 'CLM4_5' or 'CLM5_0'
   integer :: nlev_soil_adjust   ! Number of soil layers to apply soil moisture adjustment (use 0 to turn off)
+  !$OMP THREADPRIVATE(clm_phys, nlev_soil_adjust)
 
 end module clmSoilOptionMod

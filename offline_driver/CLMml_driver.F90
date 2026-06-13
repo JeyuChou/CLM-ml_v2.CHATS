@@ -5,7 +5,7 @@ module CLMml_driver
   ! Model driver
   !
   ! !USES:
-  use abortutils, only : endrun
+  use abortutils, only : endrun, tower_error_flag, tower_error_msg, reset_tower_error
   use clm_varctl, only : iulog
   use decompMod, only : bounds_type
   use shr_kind_mod, only : r8 => shr_kind_r8
@@ -17,6 +17,7 @@ module CLMml_driver
   public :: CLMml_drv             ! Model driver
   !
   logical, save :: clm_initialized = .false.  ! True after first call to CLMml_drv
+  !$OMP THREADPRIVATE(clm_initialized)
   !
   ! !PRIVATE MEMBER FUNCTIONS:
   private :: init_acclim          ! Read tower meteorology data to get acclimation temperature
@@ -29,7 +30,7 @@ module CLMml_driver
 contains
 
   !-----------------------------------------------------------------------
-  subroutine CLMml_drv (bounds)
+  subroutine CLMml_drv (bounds, cfg)
     !
     ! !DESCRIPTION:
     ! Model driver to process the tower site and year
@@ -40,7 +41,7 @@ contains
     use clm_time_manager, only : start_date_ymd, start_date_tod, curr_date_tod, dtstep, itim
     use clm_time_manager, only : get_curr_date, get_curr_calday, get_curr_time
     use clm_varorb, only : eccen, mvelpp, lambm0, obliqr
-    use controlMod, only : control
+    use controlMod, only : tower_config_type, apply_config
     use fileutils, only : getavu, relavu
     use filterMod, only : setFilters, filter
     use clm_instMod, only : clm_instReset
@@ -52,7 +53,8 @@ contains
     !
     ! !ARGUMENTS:
     implicit none
-    type(bounds_type), intent(in) :: bounds
+    type(bounds_type),       intent(in) :: bounds
+    type(tower_config_type), intent(in) :: cfg
     !
     ! !LOCAL VARIABLES:
     real(r8) :: obliq, mvelp                   ! Miscellaneous orbital parameters (not used)
@@ -83,11 +85,24 @@ contains
     character(len=256) :: fout3, fout4, fout5  ! Full output file name, including directory path
     character(len=256) :: fout6                ! Full output file name, including directory path
     character(len=256) :: fin1                 ! Full input file name for profile data, including directory path
+    logical            :: output_files_open    ! True once nout1-nout6 have been opened
     !---------------------------------------------------------------------
 
-    ! Initialize namelist run control variables
+    ! Clear any error state left from a previous tower on this thread
+    call reset_tower_error()
 
-    call control (ntim, clm_start_ymd, clm_start_tod, fin_tower, fin_clm, fin_soil_adjust, dirout)
+    output_files_open = .false.
+
+    ! Apply pre-read config to this thread's THREADPRIVATE module globals
+    call apply_config(cfg)
+
+    ntim            = cfg%ntim
+    clm_start_ymd   = cfg%clm_start_ymd
+    clm_start_tod   = cfg%clm_start_tod
+    fin_tower       = cfg%fin_tower
+    fin_clm         = cfg%fin_clm
+    fin_soil_adjust = cfg%fin_soil_adjust
+    dirout          = cfg%dirout
 
     !---------------------------------------------------------------
     ! Extract year (yr), month (mon), and day of month (day)
@@ -97,6 +112,7 @@ contains
     itim = 1
     call get_curr_date (yr, mon, day, curr_date_tod)
 
+    write (*,*) '--- Processing tower: ', tower_id(tower_num), '  (', yr, '-', mon, ') ---'
     write (iulog,*) 'Processing: ',tower_id(tower_num),yr,mon
 
     !---------------------------------------------------------------
@@ -110,10 +126,12 @@ contains
 
     if (.not. clm_initialized) then
        call InitializeRealize (bounds)
+       if (tower_error_flag) return
        call setFilters (filter)
        clm_initialized = .true.
     else
        call clm_instReset (bounds)
+       if (tower_error_flag) return
        call setFilters (filter)
     end if
 
@@ -129,12 +147,14 @@ contains
 
     call init_acclim (fin_tower, tower_num, ntim, bounds%begp, bounds%endp, &
     atm2lnd_inst, wateratm2lndbulk_inst, temperature_inst, frictionvel_inst, mlcanopy_inst)
+    if (tower_error_flag) return
 
     !---------------------------------------------------------------
     ! Initialize tower vegetation
     !---------------------------------------------------------------
 
     call TowerVeg (tower_num, bounds%begp, bounds%endp, canopystate_inst, mlcanopy_inst)
+    if (tower_error_flag) return
 
     !---------------------------------------------------------------
     ! Read CLM history file to initialize soil temperature and
@@ -171,6 +191,7 @@ contains
 
     call SoilInit (fin_clm, time_indx, bounds%begc, bounds%endc, soilstate_inst, &
     waterstatebulk_inst, temperature_inst)
+    if (tower_error_flag) return
 
     !---------------------------------------------------------------
     ! Model output files for fluxes (fout1), auxillary data (fout2),
@@ -208,6 +229,7 @@ contains
     fout6 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout6 = getavu()
     open (unit=nout6, file=trim(fout6), action="write")
+    output_files_open = .true.
 
     !---------------------------------------------------------------
     ! Open ascii profile data input file if desired
@@ -215,10 +237,6 @@ contains
 
     if (flux_profile_type .eq. -1) then
        call endrun (msg=' ERROR: flux_profile_type not supported')
-       write (ext,'(a6,"_",i4.4,"-",i2.2,"_profile.out")') tower_id(tower_num),yr,mon
-       fin1 = 'set_file_name'
-       nin1 = getavu()
-       open (unit=nin1, file=trim(fin1), action="read")
     end if
 
     !---------------------------------------------------------------
@@ -247,6 +265,7 @@ contains
 
        call TowerMetCurr (fin_tower, itim, tower_num, bounds%begp, bounds%endp, atm2lnd_inst, &
        wateratm2lndbulk_inst, frictionvel_inst)
+       if (tower_error_flag) exit
 
        ! Read tower meteorology for next time slice. This is needed for the 3-point time
        ! interpolation of atmospheric forcing from the CLM timestep to the multilayer canopy timestep.
@@ -254,47 +273,57 @@ contains
        if (met_type == 3) then
           itim_next = min(itim+1, ntim)
           call TowerMetNext (fin_tower, itim_next, bounds%begp, bounds%endp, mlcanopy_inst)
+          if (tower_error_flag) exit
        end if
 
        ! Read T,Q,U profile data for current time step
 
-       if (flux_profile_type .eq. -1) call ReadCanopyProfiles (itim, curr_calday, nin1, mlcanopy_inst)
+       if (flux_profile_type .eq. -1) then
+          call ReadCanopyProfiles (itim, curr_calday, nin1, mlcanopy_inst)
+          if (tower_error_flag) exit
+       end if
 
        ! Call model to calculate fluxes (as in CLM)
 
        call ModelAdvance (bounds, time_indx, fin_clm, fin_soil_adjust)
+       if (tower_error_flag) exit
        if (itim == 1) write (iulog,*) 'Executing model .....'
 
        ! Write output files
 
        call output (curr_calday, tower_num, nout1, nout2, nout3, nout4, nout5, nout6, &
        mlcanopy_inst, temperature_inst)
+       if (tower_error_flag) exit
 
     end do
 
     !---------------------------------------------------------------
-    ! Close ascii output and input files
+    ! Close ascii output files (guarded: only if they were successfully opened)
     !---------------------------------------------------------------
 
-    close (nout1)
-    call relavu (nout1)
-    close (nout2)
-    call relavu (nout2)
-    close (nout3)
-    call relavu (nout3)
-    close (nout4)
-    call relavu (nout4)
-    close (nout5)
-    call relavu (nout5)
-    close (nout6)
-    call relavu (nout6)
-
-    if (flux_profile_type .eq. -1) then
-       close (nin1)
-       call relavu (nin1)
+    if (output_files_open) then
+       close (nout1)
+       call relavu (nout1)
+       close (nout2)
+       call relavu (nout2)
+       close (nout3)
+       call relavu (nout3)
+       close (nout4)
+       call relavu (nout4)
+       close (nout5)
+       call relavu (nout5)
+       close (nout6)
+       call relavu (nout6)
     end if
 
-    write (iulog,*) 'Successfully finished simulation'
+    !$OMP CRITICAL(error_report)
+    if (tower_error_flag) then
+       write (iulog,*) 'TOWER FAILED: ', trim(tower_error_msg)
+       write (*,*)     'TOWER FAILED: ', trim(tower_error_msg)
+    else
+       write (iulog,*) 'Successfully finished simulation'
+    end if
+    !$OMP END CRITICAL(error_report)
 
   end subroutine CLMml_drv
 
@@ -436,6 +465,7 @@ contains
           root_biomass(p) = tower_root(it)
        else
           call endrun (msg=' TowerVeg ERROR: invalid root biomass')
+          return
        end if
 
       ! Use tower values if set in TowerDataMod. Otherwise, these are set to PFT values in subroutine getPADparameters
@@ -462,7 +492,7 @@ contains
     ! history file
     !
     ! !USES:
-    use abortutils, only : handle_err
+    use abortutils, only : handle_err, tower_error_flag
     use clm_varcon, only : denh2o
     use clm_varpar, only : nlevgrnd, nlevsoi
     use ColumnType, only : col
@@ -506,7 +536,10 @@ contains
     ! Open file
 
     status = nf_open(ncfilename, nf_nowrite, ncid)
-    if (status /= nf_noerr) call handle_err(status, ncfilename)
+    if (status /= nf_noerr) then
+       call handle_err(status, ncfilename)
+       return
+    end if
 
     ! Dimensions in FORTRAN are in column major order: the first array index
     ! varies the most rapidly. In NetCDF file the dimensions appear in the
@@ -656,6 +689,7 @@ contains
        ! Time is at end of timestep
        time_stamp = curr_calday
        call endrun (msg=' ERROR: met_type not valid')
+       return
     end select
 
     ! -----------------------------------------------
@@ -884,12 +918,14 @@ contains
        err = curr_calday_data - curr_calday
        if (abs(err) >= 1.e-04_r8) then
           call endrun (msg=' ERROR: ReadCanopyProfiles: calendar error')
+          return
        end if
 
        if (itim > 1) then
           err = zs_data - zs(p,ic)
           if (abs(err) >= 1.e-03_r8) then
              call endrun (msg=' ERROR: ReadCanopyProfiles: height profile error')
+             return
           end if
        end if
 

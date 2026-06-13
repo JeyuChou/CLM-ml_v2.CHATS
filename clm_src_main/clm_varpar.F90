@@ -14,6 +14,7 @@ module clm_varpar
   integer            :: nlevsno = -1          ! Maximum number of snow layers
   integer            :: nlevsoi = -1          ! Number of hydrologically active soil layers
   integer            :: nlevgrnd = -1         ! Number of ground layers (including hydrologically inactive)
+  !$OMP THREADPRIVATE(nlevsno, nlevsoi, nlevgrnd)
 
   integer, parameter :: numrad = 2            ! Number of radiation wavebands
   integer, parameter :: ivis = 1              ! Visible waveband index

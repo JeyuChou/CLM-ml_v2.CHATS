@@ -10,9 +10,9 @@ module shr_file_mod
   ! !PUBLIC TYPES:
   implicit none
   private
-  integer(SHR_KIND_IN), parameter :: shr_file_minUnit = 10  ! Min unit number to give
-  integer(SHR_KIND_IN), parameter :: shr_file_maxUnit = 99  ! Max unit number to give
-  logical, save :: UnitTag(0:shr_file_maxUnit) = .false.    ! Logical units in use
+  integer(SHR_KIND_IN), parameter :: shr_file_minUnit = 10   ! Min unit number to give
+  integer(SHR_KIND_IN), parameter :: shr_file_maxUnit = 199  ! Max unit number to give (increased for parallel tower runs)
+  logical, save :: UnitTag(0:shr_file_maxUnit) = .false.     ! Logical units in use
   !
   ! !PUBLIC MEMBER FUNCTIONS:
   public :: shr_file_getUnit      ! Get a logical unit for reading or writing
@@ -60,17 +60,19 @@ contains
 
        ! Choose first available unit other than 0, 5, or 6
 
+       shr_file_getUnit = -1
+       !$OMP CRITICAL(unit_table)
        do n = shr_file_maxUnit, shr_file_minUnit, -1
           inquire(n, opened=opened)
-          if (n == 5 .or. n == 6 .or. opened) then
-             cycle
-          end if
+          if (n == 5 .or. n == 6 .or. opened) cycle
           if (.not. UnitTag(n)) then
              shr_file_getUnit = n
              UnitTag(n) = .true.
-             return
+             exit
           end if
        end do
+       !$OMP END CRITICAL(unit_table)
+       if (shr_file_getUnit /= -1) return
     end if
 
     write (iulog,*) 'Error: no available units found'
@@ -99,7 +101,9 @@ contains
        write (iulog,*) 'Error: units 0, 5, and 6 must not be freed'
        call endrun()
     else if (UnitTag(unit)) then
+       !$OMP CRITICAL(unit_table)
        UnitTag(unit) = .false.
+       !$OMP END CRITICAL(unit_table)
     else
        write (iulog,*) 'unit ', unit, ' was not in use'
     end if

@@ -10,118 +10,176 @@ module controlMod
   !
   ! !PUBLIC TYPES:
   implicit none
-  !
+
+  ! One tower's worth of namelist data, pre-read before the parallel region.
+  ! Passed directly to CLMml_drv so threads never touch stdin.
+  type, public :: tower_config_type
+    character(len=6)   :: tower_name
+    integer            :: start_ymd
+    integer            :: start_tod
+    character(len=6)   :: stop_option
+    integer            :: stop_n
+    integer            :: clm_start_ymd
+    integer            :: clm_start_tod
+    character(len=256) :: fin_tower
+    character(len=256) :: fin_clm
+    character(len=6)   :: clm_phys
+    character(len=256) :: fin_soil_adjust
+    integer            :: nlev_soil_adjust
+    character(len=256) :: dirout
+    integer            :: met_type
+    real(r8)           :: dpai_min
+    integer            :: pftcon_val
+    integer            :: tower_idx   ! index into TowerDataMod arrays, resolved from tower_name
+    integer            :: ntim        ! number of timesteps, computed from stop_option/stop_n
+  end type tower_config_type
+
   ! !PUBLIC MEMBER FUNCTIONS:
-  public :: control
+  public :: read_all_configs   ! read all namelist blocks from stdin into array (serial, before OMP)
+  public :: apply_config       ! apply one config to THREADPRIVATE module globals (inside OMP)
   !-----------------------------------------------------------------------
 
 contains
 
   !-----------------------------------------------------------------------
-  subroutine control (ntim, clm_start_ymd, clm_start_tod, fin_tower, fin_clm, fin_soil_adjust, dirout)
+  subroutine read_all_configs (configs, n)
     !
     ! !DESCRIPTION:
-    ! Initialize run control variables from namelist
+    ! Read all n &clmML_inparm blocks from stdin sequentially.
+    ! Call this before the OMP parallel region.
     !
-    ! !USES:
-    use clm_time_manager, only : start_date_ymd, start_date_tod, dtstep
-    use clm_varctl, only : iulog
-    use clmSoilOptionMod, only : clm_phys, nlev_soil_adjust
-    use TowerDataMod, only : ntower, tower_id, tower_num, tower_time
-    use MLclm_varctl, only : met_type, dpai_min, pftcon_val
-    !
-    ! !ARGUMENTS:
     implicit none
-    integer, intent(out) :: ntim                       ! Number of time steps to process
-    integer, intent(out) :: clm_start_ymd              ! CLM file start date (yyyymmdd format)
-    integer, intent(out) :: clm_start_tod              ! CLM file start time-of-day (seconds past 0Z UTC)
-    character(len=256), intent(out) :: fin_tower       ! Tower meteorology file name
-    character(len=256), intent(out) :: fin_clm         ! CLM file name
-    character(len=256), intent(out) :: fin_soil_adjust ! Soil moisture adjustment factor file name
-    character(len=256), intent(out) :: dirout          ! Model output file directory path
-    !
-    ! !LOCAL VARIABLES:
-    character(len=6) :: tower_name                ! Flux tower site to process
-    character(len=6) :: stop_option               ! Character flag to specify run length
-    integer :: start_ymd                          ! Run start date in yyyymmdd format
-    integer :: start_tod                          ! Time-of-day (UTC) of the start date (seconds past 0Z; 0 to 86400)
-    integer :: stop_n                             ! Length of simulation
-
-    integer :: i                                  ! Index
-    integer :: steps_per_day                      ! Number of time steps per day
-
-    namelist /clmML_inparm/ tower_name, start_ymd, start_tod, stop_option, &
-    stop_n, fin_tower, fin_clm, clm_start_ymd, clm_start_tod, clm_phys, &
-    fin_soil_adjust, nlev_soil_adjust, dirout, met_type, dpai_min, pftcon_val
+    type(tower_config_type), intent(out) :: configs(n)
+    integer,                 intent(in)  :: n
+    integer :: i
     !---------------------------------------------------------------------
 
-    ! Default namelist variables
+    do i = 1, n
+      call read_one_config(configs(i))
+    end do
 
-    tower_name = ' '      ! Flux tower site to process
-    start_ymd = 0         ! Run start date in yyyymmdd format
-    start_tod = 0         ! Time-of-day (UTC) of the start date (seconds past 0Z; 0 to 86400)
-    stop_option = ' '     ! Sets the run length as days ('ndays') or timesteps ('nsteps')
-    stop_n = 0            ! Sets the length of the run (days or timesteps depending on stop_option)
-    clm_start_ymd = 0     ! CLM file start date (yyyymmdd format)
-    clm_start_tod = 0     ! CLM file start time-of-day (seconds past 0Z UTC)
-    fin_tower = ' '       ! Tower meteorology file name
-    fin_clm = ' '         ! CLM file name
-    clm_phys = ' '        ! CLM snow/soil layers. Options: 'CLM4_5' or 'CLM5_0'
-    fin_soil_adjust = ' ' ! Soil moisture adjustment factor file name
-    nlev_soil_adjust = 0  ! Number of soil layers to apply soil moisture adjustment (use 0 to turn off)
-    dirout = ' '          ! Model output file directory path
+  end subroutine read_all_configs
 
-    ! These three variables are set to default values in MLclm_varctl.F90. Use the namelist to set
-    ! them to tower-specific values.
+  !-----------------------------------------------------------------------
+  subroutine read_one_config (cfg)
     !
-    ! met_type = 0          ! Meteorological forcing for multilayer canopy timestep:
-                            ! 0 = no interpolation (uses standard CLM calendar)
-                            ! 2 = 2-point interpolation (not supported)
-                            ! 3 = 3-point interpolation (time is centered in timestep as in CHATS)
-    ! dpai_min = 0.01D0     ! Minimum plant area index (normalized) to be considered a vegetation layer (m2/m2)
-    ! pftcon_val = 0        ! PFT parameters: use default values (0) or override for CHATS (1)
+    ! !DESCRIPTION:
+    ! Read one &clmML_inparm block from stdin, resolve tower index, compute ntim.
+    !
+    ! !USES:
+    use clm_varctl,       only : iulog
+    use clmSoilOptionMod, only : clm_phys, nlev_soil_adjust
+    use TowerDataMod,     only : ntower, tower_id, tower_time
+    use MLclm_varctl,     only : met_type, dpai_min, pftcon_val
+    !
+    implicit none
+    type(tower_config_type), intent(out) :: cfg
+    !
+    ! Namelist variables (local — read into these, then copied into cfg)
+    character(len=6)   :: tower_name
+    character(len=6)   :: stop_option
+    integer            :: start_ymd, start_tod, stop_n
+    integer            :: clm_start_ymd, clm_start_tod
+    character(len=256) :: fin_tower, fin_clm, fin_soil_adjust, dirout
+    integer            :: i, dtstep_local, steps_per_day
 
-    ! Read namelist file
+    namelist /clmML_inparm/ tower_name, start_ymd, start_tod, stop_option,  &
+      stop_n, fin_tower, fin_clm, clm_start_ymd, clm_start_tod, clm_phys,   &
+      fin_soil_adjust, nlev_soil_adjust, dirout, met_type, dpai_min, pftcon_val
+    !---------------------------------------------------------------------
+
+    ! Defaults (same as old control())
+    tower_name       = ' '
+    start_ymd        = 0
+    start_tod        = 0
+    stop_option      = ' '
+    stop_n           = 0
+    clm_start_ymd    = 0
+    clm_start_tod    = 0
+    fin_tower        = ' '
+    fin_clm          = ' '
+    clm_phys         = ' '
+    fin_soil_adjust  = ' '
+    nlev_soil_adjust = 0
+    dirout           = ' '
+    met_type         = 0
+    dpai_min         = 0.01_r8
+    pftcon_val       = 0
 
     write(iulog,*) 'Attempting to read namelist file .....'
     read (5, clmML_inparm)
     write(iulog,*) 'Successfully read namelist file'
 
-    ! Set calendar variables
-
-    start_date_ymd = start_ymd
-    start_date_tod = start_tod
-
-    ! Match tower site to correct index for TowerDataMod arrays
-
-    tower_num = 0
+    ! Resolve tower_name to an integer index
+    cfg%tower_idx = 0
     do i = 1, ntower
-       if (tower_name == tower_id(i)) then
-          tower_num = i
-          exit
-       else
-          cycle
-       end if
+      if (tower_name == tower_id(i)) then
+        cfg%tower_idx = i
+        exit
+      end if
     end do
-
-    if (tower_num == 0) then
-       write (iulog,*) 'control error: tower site = ',tower_name, ' not found'
-       call endrun()
+    if (cfg%tower_idx == 0) then
+      write (iulog,*) 'read_one_config error: tower site = ', tower_name, ' not found'
+      call endrun()
     end if
 
-    ! Time step of forcing data (in seconds). This varies among tower sites.
-
-    dtstep = tower_time(tower_num) * 60
-
-    ! Set length of simulation
-
+    ! Compute number of timesteps (same logic as old control())
+    dtstep_local = tower_time(cfg%tower_idx) * 60
     if (stop_option == 'nsteps') then
-       ntim = stop_n                       ! Number of time steps to execute
+      cfg%ntim = stop_n
     else if (stop_option == 'ndays') then
-       steps_per_day = 86400 / dtstep      ! Number of time steps per day
-       ntim = steps_per_day * stop_n       ! Number of time steps to execute
+      steps_per_day = 86400 / dtstep_local
+      cfg%ntim      = steps_per_day * stop_n
     end if
 
-  end subroutine control
+    ! Pack everything into the struct
+    cfg%tower_name      = tower_name
+    cfg%start_ymd       = start_ymd
+    cfg%start_tod       = start_tod
+    cfg%stop_option     = stop_option
+    cfg%stop_n          = stop_n
+    cfg%clm_start_ymd   = clm_start_ymd
+    cfg%clm_start_tod   = clm_start_tod
+    cfg%fin_tower       = fin_tower
+    cfg%fin_clm         = fin_clm
+    cfg%clm_phys        = clm_phys
+    cfg%fin_soil_adjust = fin_soil_adjust
+    cfg%nlev_soil_adjust= nlev_soil_adjust
+    cfg%dirout          = dirout
+    cfg%met_type        = met_type
+    cfg%dpai_min        = dpai_min
+    cfg%pftcon_val      = pftcon_val
+
+  end subroutine read_one_config
+
+  !-----------------------------------------------------------------------
+  subroutine apply_config (cfg)
+    !
+    ! !DESCRIPTION:
+    ! Apply a pre-read config to THREADPRIVATE module globals.
+    ! Called inside the OMP parallel region at the top of CLMml_drv,
+    ! replacing the old control() call that read from stdin.
+    !
+    ! !USES:
+    use clm_time_manager, only : start_date_ymd, start_date_tod, dtstep
+    use clmSoilOptionMod, only : clm_phys, nlev_soil_adjust
+    use TowerDataMod,     only : tower_num, tower_time
+    use MLclm_varctl,     only : met_type, dpai_min, pftcon_val
+    !
+    implicit none
+    type(tower_config_type), intent(in) :: cfg
+    !---------------------------------------------------------------------
+
+    tower_num        = cfg%tower_idx
+    start_date_ymd   = cfg%start_ymd
+    start_date_tod   = cfg%start_tod
+    dtstep           = tower_time(tower_num) * 60
+    clm_phys         = cfg%clm_phys
+    nlev_soil_adjust = cfg%nlev_soil_adjust
+    met_type         = cfg%met_type
+    dpai_min         = cfg%dpai_min
+    pftcon_val       = cfg%pftcon_val
+
+  end subroutine apply_config
 
 end module controlMod

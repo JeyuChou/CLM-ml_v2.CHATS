@@ -51,6 +51,9 @@ module clm_instMod
   type(surfalb_type)             :: surfalb_inst
   type(solarabs_type)            :: solarabs_inst
   type(mlcanopy_type)            :: mlcanopy_inst !!! CLMml !!!
+  !$OMP THREADPRIVATE(atm2lnd_inst, wateratm2lndbulk_inst, soilstate_inst, water_inst, &
+  !$OMP&  waterstatebulk_inst, waterfluxbulk_inst, waterdiagnosticbulk_inst, canopystate_inst, &
+  !$OMP&  temperature_inst, energyflux_inst, frictionvel_inst, surfalb_inst, solarabs_inst, mlcanopy_inst)
 
   public :: clm_instInit     ! Initialize
   public :: clm_instReset    ! Re-set per-tower values (no re-allocation)

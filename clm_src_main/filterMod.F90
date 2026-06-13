@@ -34,6 +34,7 @@ module filterMod
 
   end type clumpfilter
   type(clumpfilter), public, target :: filter
+  !$OMP THREADPRIVATE(filter)
 
   ! !PUBLIC MEMBER FUNCTIONS:
   public :: allocFilters                      ! Initialize data structure

@@ -46,6 +46,7 @@ module MLpftconMod
   end type MLpftcon_type
 
   type(MLpftcon_type), public :: MLpftcon
+  !$OMP THREADPRIVATE(MLpftcon)
   !-----------------------------------------------------------------------
 
 contains

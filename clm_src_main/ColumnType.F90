@@ -29,6 +29,7 @@ module ColumnType
 
   end type column_type
   type(column_type), public, target :: col
+  !$OMP THREADPRIVATE(col)
   !-----------------------------------------------------------------------
 
 contains

@@ -25,6 +25,7 @@ module GridcellType
 
   end type gridcell_type
   type(gridcell_type), public, target :: grc
+  !$OMP THREADPRIVATE(grc)
   !-----------------------------------------------------------------------
 
 contains
