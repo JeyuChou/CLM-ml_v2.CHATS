@@ -14,7 +14,7 @@
 # Log name should be run.HASH.DATETIME.log (short hash) (YYYYMMDD--HHMMSS)
 # (Make sure to add .log files to .gitignore)
 
-module restore CLM_ML_env
+module restore CLM-OpenMPI
 export LIB_NETCDF=$NCAR_LDFLAGS_NETCDF; export MOD_NETCDF=$NCAR_INC_NETCDF
 cd /glade/u/home/lchou/CLM-ml_Sam/offline_executable
 
