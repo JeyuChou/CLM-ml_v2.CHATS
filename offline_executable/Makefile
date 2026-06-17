@@ -30,7 +30,7 @@ prgm = prgm.exe
 # Fortran 95 compiler
 
 
-cmplr = nvfortran -O0 -mp -g -traceback -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
+cmplr = nvfortran -O0 -g -traceback -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
 
 #cmplr = nvfortran -mp -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
 #cmplr = nvfortran -O2 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
@@ -408,3 +408,9 @@ ${O}/CLMml.o: ${drv}/CLMml.F90 $(mods) ${O}/CLMml_driver.o
 clean:
 	rm ${O}/*.o
 	rm *.mod
+run: $(prgm)
+	@HASH=$$(git rev-parse --short HEAD 2>/dev/null || echo "nohash"); \
+	DATETIME=$$(date +"%Y%m%d_%H%M%S"); \
+	LOGFILE="run.$$HASH.$$DATETIME.log"; \
+	echo "Running $(prgm) and logging to $$LOGFILE..."; \
+	./$(prgm) 2>&1 | tee $$LOGFILE
