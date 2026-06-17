@@ -68,7 +68,6 @@ contains
     !
     ! !USES:
     use clm_varctl,       only : iulog
-    use clmSoilOptionMod, only : clm_phys, nlev_soil_adjust
     use TowerDataMod,     only : ntower, tower_id, tower_time
     use MLclm_varctl,     only : met_type, dpai_min, pftcon_val
     !
@@ -81,6 +80,8 @@ contains
     integer            :: start_ymd, start_tod, stop_n
     integer            :: clm_start_ymd, clm_start_tod
     character(len=256) :: fin_tower, fin_clm, fin_soil_adjust, dirout
+    character(len=6)   :: clm_phys
+    integer            :: nlev_soil_adjust
     integer            :: i, dtstep_local, steps_per_day
 
     namelist /clmML_inparm/ tower_name, start_ymd, start_tod, stop_option,  &
@@ -165,6 +166,7 @@ contains
     use clmSoilOptionMod, only : clm_phys, nlev_soil_adjust
     use TowerDataMod,     only : tower_num, tower_time
     use MLclm_varctl,     only : met_type, dpai_min, pftcon_val
+    use omp_lib, only : omp_get_thread_num
     !
     implicit none
     type(tower_config_type), intent(in) :: cfg
@@ -175,6 +177,8 @@ contains
     start_date_tod   = cfg%start_tod
     dtstep           = tower_time(tower_num) * 60
     clm_phys         = cfg%clm_phys
+    write(*,*) 'DEBUG apply_config: thread=', omp_get_thread_num(), &
+           ' setting clm_phys="', trim(clm_phys), '" from cfg="', trim(cfg%clm_phys), '"'
     nlev_soil_adjust = cfg%nlev_soil_adjust
     met_type         = cfg%met_type
     dpai_min         = cfg%dpai_min

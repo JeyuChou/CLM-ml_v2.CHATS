@@ -3,4 +3,5 @@
 *.exe
 *.out
 output_files*/
-
+CLMml_CHATS7_log*
+*.log

@@ -6,7 +6,6 @@ module clm_varpar
   !
   ! !USES:
   use shr_kind_mod, only : r8 => shr_kind_r8
-  use clmSoilOptionMod, only : clm_phys
   !
   ! !PUBLIC TYPES:
   implicit none
@@ -31,6 +30,9 @@ contains
     !
     ! !DESCRIPTION:
     ! Initialize module variables
+    !
+    ! !USES:
+    use clmSoilOptionMod, only : clm_phys
     !
     ! !ARGUMENTS:
     implicit none

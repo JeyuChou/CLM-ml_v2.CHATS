@@ -42,6 +42,7 @@ contains
     use clm_time_manager, only : get_curr_date, get_curr_calday, get_curr_time
     use clm_varorb, only : eccen, mvelpp, lambm0, obliqr
     use controlMod, only : tower_config_type, apply_config
+    use clmSoilOptionMod, only : clm_phys
     use fileutils, only : getavu, relavu
     use filterMod, only : setFilters, filter
     use clm_instMod, only : clm_instReset
@@ -50,6 +51,7 @@ contains
     use shr_orb_mod, only : shr_orb_params
     use TowerDataMod, only : tower_id, tower_num
     use TowerMetMod, only : TowerMetCurr, TowerMetNext
+    use omp_lib, only : omp_get_thread_num
     !
     ! !ARGUMENTS:
     implicit none
@@ -95,6 +97,8 @@ contains
 
     ! Apply pre-read config to this thread's THREADPRIVATE module globals
     call apply_config(cfg)
+    write(*,*) 'DEBUG apply_config done: thread=', omp_get_thread_num(), &
+           ' clm_phys="', trim(clm_phys), '"'
 
     ntim            = cfg%ntim
     clm_start_ymd   = cfg%clm_start_ymd
@@ -112,7 +116,7 @@ contains
     itim = 1
     call get_curr_date (yr, mon, day, curr_date_tod)
 
-    write (*,*) '--- Processing tower: ', tower_id(tower_num), '  (', yr, '-', mon, ') ---'
+    write (*,*) '--- Processing tower: ', tower_id(tower_num), '  (', yr, '-', mon, ') --- Thread:', omp_get_thread_num()
     write (iulog,*) 'Processing: ',tower_id(tower_num),yr,mon
 
     !---------------------------------------------------------------
@@ -126,9 +130,9 @@ contains
 
     if (.not. clm_initialized) then
        call InitializeRealize (bounds)
+       clm_initialized = .true.   ! set before return so re-entry uses clm_instReset
        if (tower_error_flag) return
        call setFilters (filter)
-       clm_initialized = .true.
     else
        call clm_instReset (bounds)
        if (tower_error_flag) return
@@ -318,10 +322,11 @@ contains
 
     !$OMP CRITICAL(error_report)
     if (tower_error_flag) then
-       write (iulog,*) 'TOWER FAILED: ', trim(tower_error_msg)
-       write (*,*)     'TOWER FAILED: ', trim(tower_error_msg)
+       write (iulog,*) 'TOWER FAILED: ', tower_id(tower_num), ': ', trim(tower_error_msg)
+       write (*,*)     'TOWER FAILED: ', tower_id(tower_num), ': ', trim(tower_error_msg)
     else
-       write (iulog,*) 'Successfully finished simulation'
+       write (iulog,*) 'Successfully finished simulation: ', tower_id(tower_num), ' Thread:', omp_get_thread_num()
+       write (*,*)     'Successfully finished simulation: ', tower_id(tower_num), ' Thread:', omp_get_thread_num()
     end if
     !$OMP END CRITICAL(error_report)
 

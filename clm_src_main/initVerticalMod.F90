@@ -30,6 +30,7 @@ contains
     use clm_varcon, only: zmin_bedrock
     use clmSoilOptionMod, only : clm_phys
     use TowerDataMod, only : tower_num, tower_zbed
+    use omp_lib, only : omp_get_thread_num
     !
     ! !ARGUMENTS:
     implicit none
@@ -56,6 +57,9 @@ contains
     ! Define CLM layer structure for soil
 
     do c = begc, endc
+
+      write(*,*) 'DEBUG initVertical: thread=', omp_get_thread_num(), &
+           ' clm_phys="', trim(clm_phys), '" len=', len_trim(clm_phys)
 
        if (clm_phys == 'CLM4_5') then
 

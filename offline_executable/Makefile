@@ -29,7 +29,10 @@ prgm = prgm.exe
 
 # Fortran 95 compiler
 
-cmplr = nvfortran -mp -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
+
+cmplr = nvfortran -O0 -g -traceback -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
+
+#cmplr = nvfortran -mp -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
 #cmplr = nvfortran -O2 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
 
 # Specify module files (that all other files use). Order matters, because some files
@@ -75,7 +78,17 @@ objs = $(mods) $(src0) $(src1) $(src2)
 # Compile code into an executable file defined by "prgm"
 
 $(prgm): $(objs)
-	$(cmplr) -o $(prgm) $(objs)
+	@echo "Checking git status..."
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "ERROR: Git working directory is not clean (includes untracked files). Commit or stash changes before running make."; \
+		git status --short; \
+		exit 1; \
+	fi
+	@HASH=$$(git rev-parse --short HEAD 2>/dev/null || echo "nohash"); \
+	DATETIME=$$(date +"%Y%m%d_%H%M%S"); \
+	LOGFILE="run.$$HASH.$$DATETIME.log"; \
+	echo "Compiling and logging to $$LOGFILE..."; \
+	$(cmplr) -o $(prgm) $(objs) 2>&1 | tee -p $$LOGFILE
 
 # mods files first, because they are used by other files
 

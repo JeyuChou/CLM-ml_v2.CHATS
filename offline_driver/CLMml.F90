@@ -11,12 +11,16 @@ program CLMml
   type(bounds_type)        :: bounds
   type(tower_config_type)  :: configs(ntower)
 
+  write (*,*) "Starting Run!"
+
   ! Read all ntower namelist blocks from stdin sequentially, before any threads start.
   ! This is necessary because stdin cannot be read safely from multiple threads at once.
   call read_all_configs(configs, ntower)
+  write(*,*) "Read all tower configs."
 
   ! One clump per tower — each OMP thread will process one tower at a time
   call decompInit(ntower)
+  write(*,*) "Initialized decomposition."
 
   !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
   do nc = 1, ntower
