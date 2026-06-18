@@ -14,7 +14,17 @@
 # Log name should be run.HASH.DATETIME.log (short hash) (YYYYMMDD--HHMMSS)
 # (Make sure to add .log files to .gitignore)
 
-module restore CLM_ML_env
+module purge --force
+module load ncarenv/24.12
+module load conda/latest
+module load nvhpc/25.9
+module load ncarcompilers/1.0.0
+module load cuda/12.3.2
+module load libfabric/2.1.0
+module load openmpi/5.0.7
+module load hdf5-mpi/1.12.3
+module load netcdf-mpi/4.9.3
+module load parallel-netcdf/1.14.0
 export LIB_NETCDF=$NCAR_LDFLAGS_NETCDF; export MOD_NETCDF=$NCAR_INC_NETCDF
 cd /glade/u/home/lchou/CLM-ml_Sam/offline_executable
 
