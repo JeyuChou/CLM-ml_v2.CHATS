@@ -323,10 +323,8 @@ contains
     !$OMP CRITICAL(error_report)
     if (tower_error_flag) then
        write (iulog,*) 'TOWER FAILED: ', tower_id(tower_num), ': ', trim(tower_error_msg)
-       write (*,*)     'TOWER FAILED: ', tower_id(tower_num), ': ', trim(tower_error_msg)
     else
        write (iulog,*) 'Successfully finished simulation: ', tower_id(tower_num), ' Thread:', omp_get_thread_num()
-       write (*,*)     'Successfully finished simulation: ', tower_id(tower_num), ' Thread:', omp_get_thread_num()
     end if
     !$OMP END CRITICAL(error_report)
 
