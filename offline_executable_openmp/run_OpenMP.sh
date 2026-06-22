@@ -25,6 +25,12 @@ HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "nohash")
 DATETIME=$(date +"%Y%m%d_%H%M%S")
 LOGFILE="run.${HASH}.${DATETIME}_OpenMP.log"
 
+echo "Cleaning previous builds..."
+make clean
+echo "Building the executable..."
+make 
+echo "Running the executable with OpenMP..."
+
 export OMP_STACKSIZE=1028M
 export OMP_NUM_THREADS=3
 ./prgm.exe < nl.all_CHATS7.05.2007 > "$LOGFILE" 2>&1
