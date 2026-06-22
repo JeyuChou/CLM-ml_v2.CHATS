@@ -31,7 +31,7 @@ prgm = prgm.exe
 #cmplr = gfortran -O0 -g -fbacktrace -fopenmp -fcheck=all -Wall -ffpe-trap=zero,invalid,overflow -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
 
 #Intel Compiler (OpenMP -- -qopenmp enabled)
-cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -qmkl -lm -L$(HOME)/usr/lib64
+cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -llapack -lm -L$(HOME)/usr/lib64
 
 # Fortran 95 compiler (OpenMP -- -mp enabled)
 
@@ -412,6 +412,7 @@ ${O}/CLMml.o: ${drv}/CLMml.F90 $(mods) ${O}/CLMml_driver.o
 clean:
 	rm ${O}/*.o
 	rm *.mod
+	rm $(prgm)
 run: $(prgm)
 	@HASH=$$(git rev-parse --short HEAD 2>/dev/null || echo "nohash"); \
 	DATETIME=$$(date +"%Y%m%d_%H%M%S"); \
