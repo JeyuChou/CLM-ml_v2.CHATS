@@ -19,6 +19,7 @@ module load openmpi/5.0.7
 module load hdf5-mpi/1.12.3
 module load netcdf-mpi/4.9.3
 module load parallel-netcdf/1.14.0
+module load mkl/2025.3.1
 export LIB_NETCDF=$NCAR_LDFLAGS_NETCDF; export MOD_NETCDF=$NCAR_INC_NETCDF
 cd /glade/u/home/lchou/CLM-ml_Sam/offline_executable_openmp
 
