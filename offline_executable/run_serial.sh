@@ -32,7 +32,5 @@ HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "nohash")
 DATETIME=$(date +"%Y%m%d_%H%M%S")
 LOGFILE="run.${HASH}.${DATETIME}_serial.log"
 
-make
-
 export OMP_NUM_THREADS=1
 ./prgm.exe < nl.all_CHATS7.05.2007 > "$LOGFILE" 2>&1
