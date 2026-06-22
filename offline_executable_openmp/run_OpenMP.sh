@@ -10,7 +10,7 @@
 module --force purge
 module load ncarenv/24.12
 module load conda/latest
-module load nvhpc/25.9
+module load intel/2024.2.1
 module load ncarcompilers/1.0.0
 module load cuda/12.3.2
 module load libfabric/2.1.0

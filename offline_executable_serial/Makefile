@@ -27,9 +27,12 @@ O = obj
 
 prgm = prgm.exe
 
+#Intel Compiler (serial -- no -qopenmp)
+cmplr = ifx -O0 -g -traceback -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -qmkl -lm -L$(HOME)/usr/lib64
+
 # Fortran 95 compiler (serial -- no -mp)
 
-cmplr = nvfortran -O0 -g -traceback -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
+#cmplr = nvfortran -O0 -g -traceback -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
 
 #cmplr = nvfortran -O2 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
 
