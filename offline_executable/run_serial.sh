@@ -39,4 +39,4 @@ make
 echo "Running the executable with serial..."
 
 export OMP_NUM_THREADS=1
-./prgm.exe < nl.all_CHATS7.05.2007 > "$LOGFILE" 2>&1
+stdbuf -oL -eL ./prgm.exe < nl.all_CHATS7.05.2007 > "$LOGFILE" 2>&1
