@@ -58,10 +58,10 @@ contains
 
     begp = bounds%begp ; endp = bounds%endp
 
-    allocate (this%frac_veg_nosno_patch (begp:endp)) ; this%frac_veg_nosno_patch (:) = nan
-    allocate (this%elai_patch           (begp:endp)) ; this%elai_patch           (:) = nan
-    allocate (this%esai_patch           (begp:endp)) ; this%esai_patch           (:) = nan
-    allocate (this%htop_patch           (begp:endp)) ; this%htop_patch           (:) = nan
+    allocate (this%frac_veg_nosno_patch (begp:endp)) ; this%frac_veg_nosno_patch (begp:endp) = nan
+    allocate (this%elai_patch           (begp:endp)) ; this%elai_patch           (begp:endp) = nan
+    allocate (this%esai_patch           (begp:endp)) ; this%esai_patch           (begp:endp) = nan
+    allocate (this%htop_patch           (begp:endp)) ; this%htop_patch           (begp:endp) = nan
 
   end subroutine InitAllocate
 
