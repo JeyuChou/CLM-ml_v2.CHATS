@@ -7,7 +7,7 @@
 #PBS -j oe
 #PBS -l job_priority=regular
 
-module purge --force
+module --force purge
 module load ncarenv/24.12
 module load conda/latest
 module load nvhpc/25.9

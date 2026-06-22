@@ -7,7 +7,7 @@
 #PBS -j oe
 #PBS -l job_priority=regular
 
-module purge --force
+module --force purge
 module load ncarenv/24.12
 module load conda/latest
 module load nvhpc/25.9
@@ -25,5 +25,6 @@ HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "nohash")
 DATETIME=$(date +"%Y%m%d_%H%M%S")
 LOGFILE="run.${HASH}.${DATETIME}_OpenMP.log"
 
+export OMP_STACKSIZE=256M
 export OMP_NUM_THREADS=3
 ./prgm.exe < nl.all_CHATS7.05.2007 > "$LOGFILE" 2>&1
