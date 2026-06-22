@@ -27,8 +27,11 @@ O = obj
 
 prgm = prgm.exe
 
+#GCC Compiler (OpenMP -- -fopenmp enabled)
+cmplr = gfortran -O0 -g -fbacktrace -fopenmp -fcheck=all -Wall -ffpe-trap=zero,invalid,overflow -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
+
 #Intel Compiler (OpenMP -- -qopenmp enabled)
-cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -qmkl -lm -L$(HOME)/usr/lib64
+#cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -qmkl -lm -L$(HOME)/usr/lib64
 
 # Fortran 95 compiler (OpenMP -- -mp enabled)
 
