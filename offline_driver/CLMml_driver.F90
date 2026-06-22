@@ -209,32 +209,32 @@ contains
     ! and soil temperature (fout6)
     !---------------------------------------------------------------
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_flux.out")') tower_id(tower_num),yr,mon,tower_num
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_flux.out")') tower_id(tower_num),yr,mon,cfg%run_idx
     fout1 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout1 = getavu()
     open (unit=nout1, file=trim(fout1), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_aux.out")') tower_id(tower_num),yr,mon,tower_num
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_aux.out")') tower_id(tower_num),yr,mon,cfg%run_idx
     fout2 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout2 = getavu()
     open (unit=nout2, file=trim(fout2), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_profile.out")') tower_id(tower_num),yr,mon,tower_num
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_profile.out")') tower_id(tower_num),yr,mon,cfg%run_idx
     fout3 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout3 = getavu()
     open (unit=nout3, file=trim(fout3), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_fsun.out")') tower_id(tower_num),yr,mon,tower_num
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_fsun.out")') tower_id(tower_num),yr,mon,cfg%run_idx
     fout4 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout4 = getavu()
     open (unit=nout4, file=trim(fout4), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_fluxprofile.out")') tower_id(tower_num),yr,mon,tower_num
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_fluxprofile.out")') tower_id(tower_num),yr,mon,cfg%run_idx
     fout5 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout5 = getavu()
     open (unit=nout5, file=trim(fout5), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_soiltemp.out")') tower_id(tower_num),yr,mon,tower_num
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_soiltemp.out")') tower_id(tower_num),yr,mon,cfg%run_idx
     fout6 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout6 = getavu()
     open (unit=nout6, file=trim(fout6), action="write")

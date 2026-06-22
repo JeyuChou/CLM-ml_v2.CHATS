@@ -32,6 +32,7 @@ module controlMod
     integer            :: pftcon_val
     integer            :: tower_idx   ! index into TowerDataMod arrays, resolved from tower_name
     integer            :: ntim        ! number of timesteps, computed from stop_option/stop_n
+    integer            :: run_idx     ! unique loop counter (1..n), used to generate distinct output filenames
   end type tower_config_type
 
   ! !PUBLIC MEMBER FUNCTIONS:

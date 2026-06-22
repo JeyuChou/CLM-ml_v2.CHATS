@@ -16,6 +16,9 @@ program CLMml
   ! Read all ntower namelist blocks from stdin sequentially, before any threads start.
   ! This is necessary because stdin cannot be read safely from multiple threads at once.
   call read_all_configs(configs, ntower)
+  do nc = 1, ntower
+    configs(nc)%run_idx = nc
+  end do
   write(*,*) "Read all tower configs."
 
   ! One clump per tower — each OMP thread will process one tower at a time
