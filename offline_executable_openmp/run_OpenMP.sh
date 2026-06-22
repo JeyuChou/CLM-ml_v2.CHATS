@@ -3,16 +3,16 @@
 #PBS -A CESM0029
 #PBS -q main
 #PBS -l select=1:ncpus=3:mem=32GB
-#PBS -l walltime=00:30:00
+#PBS -l walltime=02:30:00
 #PBS -j oe
 #PBS -l job_priority=regular
 
 module --force purge
 module load ncarenv/24.12
 module load conda/latest
-#module load gcc/13.2.0
-module load intel/2024.2.1
-module load mkl/2024.2.1
+module load gcc/13.2.0
+#module load intel/2024.2.1
+#module load mkl/2024.2.1
 module load ncarcompilers/1.0.0
 module load cuda/12.3.2
 module load libfabric/2.1.0

@@ -3,7 +3,7 @@
 #PBS -A CESM0029
 #PBS -q main
 #PBS -l select=1:ncpus=3:mem=32GB
-#PBS -l walltime=00:30:00
+#PBS -l walltime=02:30:00
 #PBS -j oe
 #PBS -l job_priority=regular
 
