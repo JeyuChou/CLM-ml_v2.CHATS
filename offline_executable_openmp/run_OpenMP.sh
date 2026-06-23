@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 #PBS -N CLMml_CHATS7_log_openMP
 #PBS -A CESM0029
 #PBS -q main
