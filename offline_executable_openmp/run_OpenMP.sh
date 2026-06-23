@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -N CLMml_CHATS7_log_openMP
 #PBS -A CESM0029
-#PBS -q main
+#PBS -q cpudev
 #PBS -l select=1:ncpus=3:mem=32GB
 #PBS -l walltime=02:30:00
 #PBS -j oe
@@ -22,8 +22,8 @@ module load mkl
 #module load ncarcompilers/1.0.0
 #module load cuda/12.3.2
 #module load libfabric/2.1.0
-#module load openmpi/5.0.7
-module load hdf5-mpi/1.12.3
+module load openmpi/5.0.7
+#module load hdf5-mpi/1.12.3
 module load netcdf-mpi/4.9.3
 module load parallel-netcdf/1.14.0
 
