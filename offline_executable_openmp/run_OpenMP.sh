@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 #PBS -N CLMml_CHATS7_log_openMP
 #PBS -A CESM0029
 #PBS -q main
@@ -7,6 +6,8 @@ set -euo pipefail
 #PBS -l walltime=02:30:00
 #PBS -j oe
 #PBS -l job_priority=regular
+
+set -euo pipefail
 
 module --force purge
 module load ncarenv/25.10
