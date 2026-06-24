@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -N CLMml_CHATS7_log_openMP_oneThread
+#PBS -N CLMml_CHATS7_log_openMP_OneThread
 #PBS -A CESM0029
 #PBS -q develop
 #PBS -l select=1:ncpus=3:mem=32GB
