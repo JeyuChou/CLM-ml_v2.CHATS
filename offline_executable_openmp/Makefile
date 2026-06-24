@@ -410,8 +410,9 @@ ${O}/CLMml.o: ${drv}/CLMml.F90 $(mods) ${O}/CLMml_driver.o
 # clean up object and mod files
 
 clean:
-	rm ${O}/*.o
-	rm *.mod
+	rm -f ${O}/*.o
+	rm -f *.mod
+	rm -f $(prgm)
 run: $(prgm)
 	@HASH=$$(git rev-parse --short HEAD 2>/dev/null || echo "nohash"); \
 	DATETIME=$$(date +"%Y%m%d_%H%M%S"); \
