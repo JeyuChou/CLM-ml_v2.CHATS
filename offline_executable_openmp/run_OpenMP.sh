@@ -1,8 +1,8 @@
 #!/bin/bash
-#PBS -N CLMml_CHATS7_log_openMP_OneThread
+#PBS -N CLMml_CHATS7_log_openMP_ThreeThread
 #PBS -A CESM0029
 #PBS -q develop
-#PBS -l select=1:ncpus=1:mem=32GB
+#PBS -l select=1:ncpus=3:mem=32GB
 #PBS -l walltime=00:30:00
 #PBS -j oe
 #PBS -l job_priority=regular
@@ -33,7 +33,7 @@ cd /glade/u/home/lchou/CLM-ml_Sam/offline_executable_openmp
 
 HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "nohash")
 DATETIME=$(date +"%Y%m%d_%H%M%S")
-LOGFILE="run.${HASH}.${DATETIME}_OpenMP_OneThread.log"
+LOGFILE="run.${HASH}.${DATETIME}_OpenMP_ThreeThread.log"
 
 echo "Cleaning previous builds..."
 make clean
@@ -42,5 +42,5 @@ make
 echo "Running the executable with OpenMP..."
 
 export OMP_STACKSIZE=8G
-export OMP_NUM_THREADS=1
+export OMP_NUM_THREADS=3
 stdbuf -oL -eL ./prgm.exe < nl.all_CHATS7.05.2007 > "$LOGFILE" 2>&1
