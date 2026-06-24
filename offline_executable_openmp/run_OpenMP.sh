@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -N CLMml_CHATS7_log_openMP
+#PBS -N CLMml_CHATS7_log_openMP_oneThread
 #PBS -A CESM0029
 #PBS -q develop
 #PBS -l select=1:ncpus=3:mem=32GB
@@ -42,5 +42,5 @@ make
 echo "Running the executable with OpenMP..."
 
 export OMP_STACKSIZE=1028M
-export OMP_NUM_THREADS=3
+export OMP_NUM_THREADS=1
 stdbuf -oL -eL ./prgm.exe < nl.all_CHATS7.05.2007 > "$LOGFILE" 2>&1
