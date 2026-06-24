@@ -17,9 +17,9 @@ module load nco
 module load craype
 module load cmake
 #module load gcc/13.2.0
-module load intel/2025.3.2
+module load intel/2025.1.0
 module load mkl
-#module load ncarcompilers/1.0.0
+module load ncarcompilers/1.0.0
 #module load cuda/12.3.2
 module load libfabric/2.1.0
 module load openmpi/5.0.7
