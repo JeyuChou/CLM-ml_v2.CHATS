@@ -10,7 +10,7 @@
 set -euo pipefail
 
 module --force purge
-module load ncarenv/25.10
+module load ncarenv/24.12
 module load cesmdev/1.0
 module load conda/latest
 module load nco
