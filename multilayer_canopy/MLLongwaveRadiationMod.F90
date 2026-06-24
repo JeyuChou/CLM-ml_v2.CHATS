@@ -145,6 +145,9 @@ contains
        tau = 0._r8
 
        ! Emitted longwave radiation is weighted average of sunlit and shaded leaves
+       write(*,*) 'emleaf(patch%itype(p)) = ', emleaf(patch%itype(p))
+       write(*,*) 'sb = ', sb
+       write(*,*) 'tleaf(p,ic,isun) = ', tleaf(p,ic,isun)
 
        do ic = nbot(p), ntop(p)
           lw_source_sun = emleaf(patch%itype(p)) * sb * tleaf(p,ic,isun)**4
