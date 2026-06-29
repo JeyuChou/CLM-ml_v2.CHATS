@@ -150,6 +150,9 @@ contains
 
          write(*,*) 'emleaf(patch%itype(p)) = ', emleaf(patch%itype(p))
          write(*,*) 'sb = ', sb
+         write(*,*) 'p = ', p
+         write(*,*) 'ic = ', ic
+         write(*,*) 'isun = ', isun
          write(*,*) 'tleaf(p,ic,isun) = ', tleaf(p,ic,isun)
           lw_source_sun = emleaf(patch%itype(p)) * sb * tleaf(p,ic,isun)**4
           lw_source_sha = emleaf(patch%itype(p)) * sb * tleaf(p,ic,isha)**4
