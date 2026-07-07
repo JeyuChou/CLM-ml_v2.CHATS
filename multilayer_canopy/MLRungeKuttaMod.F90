@@ -137,7 +137,7 @@ module MLRungeKuttaMod
                   write(*,*) '   dtleaf_sun=',dtleaf(p,ic,isun,j)
                 end if
              end do
-             if (abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
+             if (p==1 .and. ic==2 .and. abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
                write(*,*) "In irk<nrk block of RungeKuttaUpdate AFTER do j = 1, irk, blowup detected but not stopping"
                write(*,*) '   BLOWUP: RungeKutta intermediate irk=', irk
                write(*,*) '   p=',p
@@ -167,7 +167,7 @@ module MLRungeKuttaMod
                 lwp(p,ic,isun) = lwp(p,ic,isun) + b(j) * dlwp(p,ic,isun,j)
                 lwp(p,ic,isha) = lwp(p,ic,isha) + b(j) * dlwp(p,ic,isha,j)
              end do
-             if (abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
+             if (p==1 .and. ic==2 .and. abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
                write(*,*) "In irk == nrk block of RungeKuttaUpdate, blowup detected"
                write(*,*) '   BLOWUP: RungeKutta final'
                write(*,*) '   irk=',irk
@@ -185,7 +185,7 @@ module MLRungeKuttaMod
 
        end do
 
-       if (abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
+       if (p==1 .and. ic==2 .and. abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
          write(*,*) "Before 'Now for tg' in RungeKuttaUpdate, blowup detected"
          write(*,*) '   BLOWUP: RungeKutta final'
          write(*,*) '   irk=',irk
