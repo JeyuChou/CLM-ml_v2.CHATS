@@ -7,6 +7,8 @@
 #PBS -j oe
 #PBS -l job_priority=regular
 
+set -euo pipefail
+
 module --force purge
 module load ncarenv/24.12
 module load conda/latest
