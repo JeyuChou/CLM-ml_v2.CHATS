@@ -109,315 +109,239 @@ $(prgm): $(objs)
 # mods files first, because they are used by other files
 
 ${O}/shr_kind_mod.o: ${shr}/shr_kind_mod.F90
-	$(cmplr) -c ${shr}/shr_kind_mod.F90
-	mv shr_kind_mod.o ${O}
+	$(cmplr) -c ${shr}/shr_kind_mod.F90 -o ${O}/shr_kind_mod.o
 
 ${O}/shr_file_mod.o: ${shr}/shr_file_mod.F90 ${O}/shr_kind_mod.o ${O}/clm_varctl.o ${O}/abortutils.o
-	$(cmplr) -c ${shr}/shr_file_mod.F90
-	mv shr_file_mod.o ${O}
+	$(cmplr) -c ${shr}/shr_file_mod.F90 -o ${O}/shr_file_mod.o
 
 ${O}/shr_orb_mod.o: ${shr}/shr_orb_mod.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o
-	$(cmplr) -c ${shr}/shr_orb_mod.F90
-	mv shr_orb_mod.o ${O}
+	$(cmplr) -c ${shr}/shr_orb_mod.F90 -o ${O}/shr_orb_mod.o
 
 ${O}/clm_varcon.o: ${main}/clm_varcon.F90 ${O}/shr_kind_mod.o
-	$(cmplr) -c ${main}/clm_varcon.F90
-	mv clm_varcon.o ${O}
+	$(cmplr) -c ${main}/clm_varcon.F90 -o ${O}/clm_varcon.o
 
 ${O}/clm_varctl.o: ${main}/clm_varctl.F90 ${O}/shr_kind_mod.o
-	$(cmplr) -c ${main}/clm_varctl.F90
-	mv clm_varctl.o ${O}
+	$(cmplr) -c ${main}/clm_varctl.F90 -o ${O}/clm_varctl.o
 
 ${O}/clm_varpar.o: ${main}/clm_varpar.F90 ${O}/shr_kind_mod.o ${O}/MLclm_varctl.o
-	$(cmplr) -c ${main}/clm_varpar.F90
-	mv clm_varpar.o ${O}
+	$(cmplr) -c ${main}/clm_varpar.F90 -o ${O}/clm_varpar.o
 
 ${O}/decompMod.o: ${main}/decompMod.F90 ${O}/shr_kind_mod.o
-	$(cmplr) -c ${main}/decompMod.F90
-	mv decompMod.o ${O}
+	$(cmplr) -c ${main}/decompMod.F90 -o ${O}/decompMod.o
 
 ${O}/pftconMod.o: ${main}/pftconMod.F90 ${O}/shr_kind_mod.o ${O}/clm_varpar.o ${O}/MLclm_varctl.o
-	$(cmplr) -c ${main}/pftconMod.F90
-	mv pftconMod.o ${O}
+	$(cmplr) -c ${main}/pftconMod.F90 -o ${O}/pftconMod.o
 
 ${O}/abortutils.o: ${main}/abortutils.F90 ${O}/shr_kind_mod.o ${O}/clm_varctl.o
-	$(cmplr) -c ${main}/abortutils.F90
-	mv abortutils.o ${O}
+	$(cmplr) -c ${main}/abortutils.F90 -o ${O}/abortutils.o
 
 ${O}/clm_time_manager.o: ${util}/clm_time_manager.F90 ${O}/shr_kind_mod.o ${O}/clm_varctl.o ${O}/abortutils.o
-	$(cmplr) -c ${util}/clm_time_manager.F90
-	mv clm_time_manager.o ${O}
+	$(cmplr) -c ${util}/clm_time_manager.F90 -o ${O}/clm_time_manager.o
 
 ${O}/clm_varorb.o: ${util}/clm_varorb.F90 ${O}/shr_kind_mod.o
-	$(cmplr) -c ${util}/clm_varorb.F90
-	mv clm_varorb.o ${O}
+	$(cmplr) -c ${util}/clm_varorb.F90 -o ${O}/clm_varorb.o
 
 ${O}/fileutils.o: ${util}/fileutils.F90 ${O}/shr_kind_mod.o ${O}/clm_varctl.o ${O}/abortutils.o ${O}/shr_file_mod.o
-	$(cmplr) -c ${util}/fileutils.F90
-	mv fileutils.o ${O}
+	$(cmplr) -c ${util}/fileutils.F90 -o ${O}/fileutils.o
 
 ${O}/spmdMod.o: ${util}/spmdMod.F90 ${O}/shr_kind_mod.o
-	$(cmplr) -c ${util}/spmdMod.F90
-	mv spmdMod.o ${O}
+	$(cmplr) -c ${util}/spmdMod.F90 -o ${O}/spmdMod.o
 
 ${O}/MLclm_varcon.o: ${can}/MLclm_varcon.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o
-	$(cmplr) -c ${can}/MLclm_varcon.F90
-	mv MLclm_varcon.o ${O}
+	$(cmplr) -c ${can}/MLclm_varcon.F90 -o ${O}/MLclm_varcon.o
 
 ${O}/MLclm_varctl.o: ${can}/MLclm_varctl.F90 ${O}/shr_kind_mod.o
-	$(cmplr) -c ${can}/MLclm_varctl.F90
-	mv MLclm_varctl.o ${O}
+	$(cmplr) -c ${can}/MLclm_varctl.F90 -o ${O}/MLclm_varctl.o
 
 ${O}/MLclm_varpar.o: ${can}/MLclm_varpar.F90 ${O}/shr_kind_mod.o
-	$(cmplr) -c ${can}/MLclm_varpar.F90
-	mv MLclm_varpar.o ${O}
+	$(cmplr) -c ${can}/MLclm_varpar.F90 -o ${O}/MLclm_varpar.o
 
 ${O}/clmSoilOptionMod.o: ${drv}/clmSoilOptionMod.F90 ${O}/shr_kind_mod.o
-	$(cmplr) -c ${drv}/clmSoilOptionMod.F90
-	mv clmSoilOptionMod.o ${O}
+	$(cmplr) -c ${drv}/clmSoilOptionMod.F90 -o ${O}/clmSoilOptionMod.o
 
 ${O}/MLMathToolsMod.o: ${can}/MLMathToolsMod.F90 ${O}/shr_kind_mod.o ${O}/MLclm_varctl.o ${O}/abortutils.o
-	$(cmplr) -c ${can}/MLMathToolsMod.F90
-	mv MLMathToolsMod.o ${O}
+	$(cmplr) -c ${can}/MLMathToolsMod.F90 -o ${O}/MLMathToolsMod.o
 
 ${O}/MLpftconMod.o: ${can}/MLpftconMod.F90 ${O}/shr_kind_mod.o ${O}/clm_varpar.o ${O}/MLclm_varctl.o
-	$(cmplr) -c ${can}/MLpftconMod.F90
-	mv MLpftconMod.o ${O}
+	$(cmplr) -c ${can}/MLpftconMod.F90 -o ${O}/MLpftconMod.o
 
 ${O}/MLWaterVaporMod.o: ${can}/MLWaterVaporMod.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/MLclm_varcon.o
-	$(cmplr) -c ${can}/MLWaterVaporMod.F90
-	mv MLWaterVaporMod.o ${O}
+	$(cmplr) -c ${can}/MLWaterVaporMod.F90 -o ${O}/MLWaterVaporMod.o
 
 ${O}/SoilTexMod.o: ${drv}/SoilTexMod.F90 ${O}/shr_kind_mod.o
-	$(cmplr) -c ${drv}/SoilTexMod.F90
-	mv SoilTexMod.o ${O}
+	$(cmplr) -c ${drv}/SoilTexMod.F90 -o ${O}/SoilTexMod.o
 
 ${O}/TowerDataMod.o: ${drv}/TowerDataMod.F90 ${O}/shr_kind_mod.o
-	$(cmplr) -c ${drv}/TowerDataMod.F90
-	mv TowerDataMod.o ${O}
+	$(cmplr) -c ${drv}/TowerDataMod.F90 -o ${O}/TowerDataMod.o
 
 ${O}/atm2lndType.o: ${main}/atm2lndType.F90 ${O}/shr_kind_mod.o ${O}/clm_varpar.o ${O}/decompMod.o
-	$(cmplr) -c ${main}/atm2lndType.F90
-	mv atm2lndType.o ${O}
+	$(cmplr) -c ${main}/atm2lndType.F90 -o ${O}/atm2lndType.o
 
 ${O}/wateratm2lndBulkType.o: ${main}/wateratm2lndBulkType.F90 ${O}/shr_kind_mod.o ${O}/clm_varpar.o ${O}/decompMod.o
-	$(cmplr) -c ${main}/wateratm2lndBulkType.F90
-	mv wateratm2lndBulkType.o ${O}
+	$(cmplr) -c ${main}/wateratm2lndBulkType.F90 -o ${O}/wateratm2lndBulkType.o
 
 ${O}/ColumnType.o: ${main}/ColumnType.F90 ${O}/shr_kind_mod.o ${O}/clm_varpar.o ${O}/clm_varcon.o
-	$(cmplr) -c ${main}/ColumnType.F90
-	mv ColumnType.o ${O}
+	$(cmplr) -c ${main}/ColumnType.F90 -o ${O}/ColumnType.o
 
 ${O}/PatchType.o: ${main}/PatchType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o
-	$(cmplr) -c ${main}/PatchType.F90
-	mv PatchType.o ${O}
+	$(cmplr) -c ${main}/PatchType.F90 -o ${O}/PatchType.o
 
 ${O}/GridcellType.o: ${main}/GridcellType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o
-	$(cmplr) -c ${main}/GridcellType.F90
-	mv GridcellType.o ${O}
+	$(cmplr) -c ${main}/GridcellType.F90 -o ${O}/GridcellType.o
 
 ${O}/ncdio_pio.o: ${main}/ncdio_pio.F90 ${O}/shr_kind_mod.o ${O}/abortutils.o
-	$(cmplr) -c ${main}/ncdio_pio.F90
-	mv ncdio_pio.o ${O}
+	$(cmplr) -c ${main}/ncdio_pio.F90 -o ${O}/ncdio_pio.o
 
 ${O}/histFileMod.o: ${main}/histFileMod.F90 ${O}/shr_kind_mod.o ${O}/decompMod.o
-	$(cmplr) -c ${main}/histFileMod.F90
-	mv histFileMod.o ${O}
+	$(cmplr) -c ${main}/histFileMod.F90 -o ${O}/histFileMod.o
 
 ${O}/restUtilMod.o: ${util}/restUtilMod.F90 ${O}/shr_kind_mod.o ${O}/ncdio_pio.o
-	$(cmplr) -c ${util}/restUtilMod.F90
-	mv restUtilMod.o ${O}
+	$(cmplr) -c ${util}/restUtilMod.F90 -o ${O}/restUtilMod.o
 
 ${O}/CanopyStateType.o: ${bgp}/CanopyStateType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/CanopyStateType.F90
-	mv CanopyStateType.o ${O}
+	$(cmplr) -c ${bgp}/CanopyStateType.F90 -o ${O}/CanopyStateType.o
 
 ${O}/EnergyFluxType.o: ${bgp}/EnergyFluxType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/EnergyFluxType.F90
-	mv EnergyFluxType.o ${O}
+	$(cmplr) -c ${bgp}/EnergyFluxType.F90 -o ${O}/EnergyFluxType.o
 
 ${O}/FrictionVelocityMod.o: ${bgp}/FrictionVelocityMod.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/FrictionVelocityMod.F90
-	mv FrictionVelocityMod.o ${O}
+	$(cmplr) -c ${bgp}/FrictionVelocityMod.F90 -o ${O}/FrictionVelocityMod.o
 
 ${O}/SoilStateType.o: ${bgp}/SoilStateType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/clm_varpar.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/SoilStateType.F90
-	mv SoilStateType.o ${O}
+	$(cmplr) -c ${bgp}/SoilStateType.F90 -o ${O}/SoilStateType.o
 
 ${O}/SolarAbsorbedType.o: ${bgp}/SolarAbsorbedType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/SolarAbsorbedType.F90
-	mv SolarAbsorbedType.o ${O}
+	$(cmplr) -c ${bgp}/SolarAbsorbedType.F90 -o ${O}/SolarAbsorbedType.o
 
 ${O}/SurfaceAlbedoType.o: ${bgp}/SurfaceAlbedoType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/clm_varpar.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/SurfaceAlbedoType.F90
-	mv SurfaceAlbedoType.o ${O}
+	$(cmplr) -c ${bgp}/SurfaceAlbedoType.F90 -o ${O}/SurfaceAlbedoType.o
 
 ${O}/TemperatureType.o: ${bgp}/TemperatureType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/clm_varpar.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/TemperatureType.F90
-	mv TemperatureType.o ${O}
+	$(cmplr) -c ${bgp}/TemperatureType.F90 -o ${O}/TemperatureType.o
 
 ${O}/WaterFluxBulkType.o: ${bgp}/WaterFluxBulkType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/WaterFluxBulkType.F90
-	mv WaterFluxBulkType.o ${O}
+	$(cmplr) -c ${bgp}/WaterFluxBulkType.F90 -o ${O}/WaterFluxBulkType.o
 
 ${O}/WaterType.o: ${bgp}/WaterType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/clm_varpar.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/WaterType.F90
-	mv WaterType.o ${O}
+	$(cmplr) -c ${bgp}/WaterType.F90 -o ${O}/WaterType.o
 
 ${O}/WaterStateBulkType.o: ${bgp}/WaterStateBulkType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/clm_varpar.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/WaterStateBulkType.F90
-	mv WaterStateBulkType.o ${O}
+	$(cmplr) -c ${bgp}/WaterStateBulkType.F90 -o ${O}/WaterStateBulkType.o
 
 ${O}/WaterDiagnosticBulkType.o: ${bgp}/WaterDiagnosticBulkType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/clm_varpar.o ${O}/decompMod.o
-	$(cmplr) -c ${bgp}/WaterDiagnosticBulkType.F90
-	mv WaterDiagnosticBulkType.o ${O}
+	$(cmplr) -c ${bgp}/WaterDiagnosticBulkType.F90 -o ${O}/WaterDiagnosticBulkType.o
 
 ${O}/MLCanopyFluxesType.o: ${can}/MLCanopyFluxesType.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/clm_varpar.o \
 ${O}/decompMod.o ${O}/histFileMod.o ${O}/restUtilMod.o ${O}/ncdio_pio.o ${O}/shr_file_mod.o ${O}/MLclm_varpar.o
-	$(cmplr) -c ${can}/MLCanopyFluxesType.F90
-	mv MLCanopyFluxesType.o ${O}
+	$(cmplr) -c ${can}/MLCanopyFluxesType.F90 -o ${O}/MLCanopyFluxesType.o
 
 ${O}/filterMod.o: ${main}/filterMod.F90 ${O}/shr_kind_mod.o ${O}/clm_varcon.o
-	$(cmplr) -c ${main}/filterMod.F90
-	mv filterMod.o ${O}
+	$(cmplr) -c ${main}/filterMod.F90 -o ${O}/filterMod.o
 
 # src0 files, which use mod files
 
 ${O}/SurfaceAlbedoMod.o: ${bgp}/SurfaceAlbedoMod.F90 $(mods)
-	$(cmplr) -c ${bgp}/SurfaceAlbedoMod.F90
-	mv SurfaceAlbedoMod.o ${O}
+	$(cmplr) -c ${bgp}/SurfaceAlbedoMod.F90 -o ${O}/SurfaceAlbedoMod.o
 
 ${O}/SoilStateInitTimeConstMod.o: ${bgp}/SoilStateInitTimeConstMod.F90 $(mods)
-	$(cmplr) -c ${bgp}/SoilStateInitTimeConstMod.F90
-	mv SoilStateInitTimeConstMod.o ${O}
+	$(cmplr) -c ${bgp}/SoilStateInitTimeConstMod.F90 -o ${O}/SoilStateInitTimeConstMod.o
 
 ${O}/initVerticalMod.o: ${main}/initVerticalMod.F90 $(mods)
-	$(cmplr) -c ${main}/initVerticalMod.F90
-	mv initVerticalMod.o ${O}
+	$(cmplr) -c ${main}/initVerticalMod.F90 -o ${O}/initVerticalMod.o
 
 # src1 files, which use mod files and src0 files
 
 ${O}/clm_instMod.o: ${main}/clm_instMod.F90 $(mods) $(src0)
-	$(cmplr) -c ${main}/clm_instMod.F90
-	mv clm_instMod.o ${O}
+	$(cmplr) -c ${main}/clm_instMod.F90 -o ${O}/clm_instMod.o
 
 ${O}/controlMod.o: ${drv}/controlMod.F90 $(mods)
-	$(cmplr) -c ${drv}/controlMod.F90
-	mv controlMod.o ${O}
+	$(cmplr) -c ${drv}/controlMod.F90 -o ${O}/controlMod.o
 
 ${O}/SoilWaterMovementMod.o: ${bgp}/SoilWaterMovementMod.F90 $(mods)
-	$(cmplr) -c ${bgp}/SoilWaterMovementMod.F90
-	mv SoilWaterMovementMod.o ${O}
+	$(cmplr) -c ${bgp}/SoilWaterMovementMod.F90 -o ${O}/SoilWaterMovementMod.o
 
 ${O}/MLSoilTemperatureMod.o: ${can}/MLSoilTemperatureMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLSoilTemperatureMod.F90
-	mv MLSoilTemperatureMod.o ${O}
+	$(cmplr) -c ${can}/MLSoilTemperatureMod.F90 -o ${O}/MLSoilTemperatureMod.o
 
 ${O}/TowerMetMod.o: ${drv}/TowerMetMod.F90 $(mods)
-	$(cmplr) -c ${drv}/TowerMetMod.F90
-	mv TowerMetMod.o ${O}
+	$(cmplr) -c ${drv}/TowerMetMod.F90 -o ${O}/TowerMetMod.o
 
 ${O}/clmDataMod.o: ${drv}/clmDataMod.F90 $(mods)
-	$(cmplr) -c ${drv}/clmDataMod.F90
-	mv clmDataMod.o ${O}
+	$(cmplr) -c ${drv}/clmDataMod.F90 -o ${O}/clmDataMod.o
 
 ${O}/SurfaceResistanceMod.o: ${bgp}/SurfaceResistanceMod.F90 $(mods)
-	$(cmplr) -c ${bgp}/SurfaceResistanceMod.F90
-	mv SurfaceResistanceMod.o ${O}
+	$(cmplr) -c ${bgp}/SurfaceResistanceMod.F90 -o ${O}/SurfaceResistanceMod.o
 
 ${O}/MLSolarRadiationMod.o: ${can}/MLSolarRadiationMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLSolarRadiationMod.F90
-	mv MLSolarRadiationMod.o ${O}
+	$(cmplr) -c ${can}/MLSolarRadiationMod.F90 -o ${O}/MLSolarRadiationMod.o
 
 ${O}/MLCanopyTurbulenceMod.o: ${can}/MLCanopyTurbulenceMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLCanopyTurbulenceMod.F90
-	mv MLCanopyTurbulenceMod.o ${O}
+	$(cmplr) -c ${can}/MLCanopyTurbulenceMod.F90 -o ${O}/MLCanopyTurbulenceMod.o
 
 ${O}/MLFluxProfileSolutionMod.o: ${can}/MLFluxProfileSolutionMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLFluxProfileSolutionMod.F90
-	mv MLFluxProfileSolutionMod.o ${O}
+	$(cmplr) -c ${can}/MLFluxProfileSolutionMod.F90 -o ${O}/MLFluxProfileSolutionMod.o
 
 ${O}/MLLeafBoundaryLayerMod.o: ${can}/MLLeafBoundaryLayerMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLLeafBoundaryLayerMod.F90
-	mv MLLeafBoundaryLayerMod.o ${O}
+	$(cmplr) -c ${can}/MLLeafBoundaryLayerMod.F90 -o ${O}/MLLeafBoundaryLayerMod.o
 
 ${O}/MLLeafHeatCapacityMod.o: ${can}/MLLeafHeatCapacityMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLLeafHeatCapacityMod.F90
-	mv MLLeafHeatCapacityMod.o ${O}
+	$(cmplr) -c ${can}/MLLeafHeatCapacityMod.F90 -o ${O}/MLLeafHeatCapacityMod.o
 
 ${O}/MLLeafFluxesMod.o: ${can}/MLLeafFluxesMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLLeafFluxesMod.F90
-	mv MLLeafFluxesMod.o ${O}
+	$(cmplr) -c ${can}/MLLeafFluxesMod.F90 -o ${O}/MLLeafFluxesMod.o
 
 ${O}/MLLeafPhotosynthesisMod.o: ${can}/MLLeafPhotosynthesisMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLLeafPhotosynthesisMod.F90
-	mv MLLeafPhotosynthesisMod.o ${O}
+	$(cmplr) -c ${can}/MLLeafPhotosynthesisMod.F90 -o ${O}/MLLeafPhotosynthesisMod.o
 
 ${O}/MLLongwaveRadiationMod.o: ${can}/MLLongwaveRadiationMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLLongwaveRadiationMod.F90
-	mv MLLongwaveRadiationMod.o ${O}
+	$(cmplr) -c ${can}/MLLongwaveRadiationMod.F90 -o ${O}/MLLongwaveRadiationMod.o
 
 ${O}/MLPlantHydraulicsMod.o: ${can}/MLPlantHydraulicsMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLPlantHydraulicsMod.F90
-	mv MLPlantHydraulicsMod.o ${O}
+	$(cmplr) -c ${can}/MLPlantHydraulicsMod.F90 -o ${O}/MLPlantHydraulicsMod.o
 
 ${O}/MLSoilFluxesMod.o: ${can}/MLSoilFluxesMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLSoilFluxesMod.F90
-	mv MLSoilFluxesMod.o ${O}
+	$(cmplr) -c ${can}/MLSoilFluxesMod.F90 -o ${O}/MLSoilFluxesMod.o
 
 ${O}/MLCanopyWaterMod.o: ${can}/MLCanopyWaterMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLCanopyWaterMod.F90
-	mv MLCanopyWaterMod.o ${O}
+	$(cmplr) -c ${can}/MLCanopyWaterMod.F90 -o ${O}/MLCanopyWaterMod.o
 
 ${O}/MLCanopyNitrogenProfileMod.o: ${can}/MLCanopyNitrogenProfileMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLCanopyNitrogenProfileMod.F90
-	mv MLCanopyNitrogenProfileMod.o ${O}
+	$(cmplr) -c ${can}/MLCanopyNitrogenProfileMod.F90 -o ${O}/MLCanopyNitrogenProfileMod.o
 
 ${O}/MLGetAtmForcingMod.o: ${can}/MLGetAtmForcingMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLGetAtmForcingMod.F90
-	mv MLGetAtmForcingMod.o ${O}
+	$(cmplr) -c ${can}/MLGetAtmForcingMod.F90 -o ${O}/MLGetAtmForcingMod.o
 
 ${O}/MLRungeKuttaMod.o: ${can}/MLRungeKuttaMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLRungeKuttaMod.F90
-	mv MLRungeKuttaMod.o ${O}
+	$(cmplr) -c ${can}/MLRungeKuttaMod.F90 -o ${O}/MLRungeKuttaMod.o
 
 ${O}/MLinitVerticalMod.o: ${can}/MLinitVerticalMod.F90 $(mods)
-	$(cmplr) -c ${can}/MLinitVerticalMod.F90
-	mv MLinitVerticalMod.o ${O}
+	$(cmplr) -c ${can}/MLinitVerticalMod.F90 -o ${O}/MLinitVerticalMod.o
 
 # src2 files, which use mod files and src1 files
 
 ${O}/initSubgridMod.o: ${main}/initSubgridMod.F90 $(mods)
-	$(cmplr) -c ${main}/initSubgridMod.F90
-	mv initSubgridMod.o ${O}
+	$(cmplr) -c ${main}/initSubgridMod.F90 -o ${O}/initSubgridMod.o
 
 ${O}/initGridCellsMod.o: ${main}/initGridCellsMod.F90 $(mods) ${O}/initSubgridMod.o
-	$(cmplr) -c ${main}/initGridCellsMod.F90
-	mv initGridCellsMod.o ${O}
+	$(cmplr) -c ${main}/initGridCellsMod.F90 -o ${O}/initGridCellsMod.o
 
 ${O}/MLCanopyFluxesMod.o: ${can}/MLCanopyFluxesMod.F90 $(mods) $(src1)
-	$(cmplr) -c ${can}/MLCanopyFluxesMod.F90
-	mv MLCanopyFluxesMod.o ${O}
+	$(cmplr) -c ${can}/MLCanopyFluxesMod.F90 -o ${O}/MLCanopyFluxesMod.o
 
 ${O}/clm_driver.o: ${main}/clm_driver.F90 $(mods) $(src0) $(src1) ${O}/MLCanopyFluxesMod.o
-	$(cmplr) -c ${main}/clm_driver.F90
-	mv clm_driver.o ${O}
+	$(cmplr) -c ${main}/clm_driver.F90 -o ${O}/clm_driver.o
 
 ${O}/clm_initializeMod.o: ${main}/clm_initializeMod.F90 $(mods) ${O}/initGridCellsMod.o ${O}/MLCanopyTurbulenceMod.o
-	$(cmplr) -c ${main}/clm_initializeMod.F90
-	mv clm_initializeMod.o ${O}
+	$(cmplr) -c ${main}/clm_initializeMod.F90 -o ${O}/clm_initializeMod.o
 
 ${O}/lnd_comp_nuopc.o: ${cpl}/lnd_comp_nuopc.F90 $(mods) ${O}/clm_initializeMod.o ${O}/clm_driver.o
-	$(cmplr) -c ${cpl}/lnd_comp_nuopc.F90
-	mv lnd_comp_nuopc.o ${O}
+	$(cmplr) -c ${cpl}/lnd_comp_nuopc.F90 -o ${O}/lnd_comp_nuopc.o
 
 ${O}/CLMml_driver.o: ${drv}/CLMml_driver.F90 $(mods) $(src1) ${O}/lnd_comp_nuopc.o
-	$(cmplr) -c ${drv}/CLMml_driver.F90
-	mv CLMml_driver.o ${O}
+	$(cmplr) -c ${drv}/CLMml_driver.F90 -o ${O}/CLMml_driver.o
 
 ${O}/CLMml.o: ${drv}/CLMml.F90 $(mods) ${O}/CLMml_driver.o
-	$(cmplr) -c ${drv}/CLMml.F90
-	mv CLMml.o ${O}
+	$(cmplr) -c ${drv}/CLMml.F90 -o ${O}/CLMml.o
 
 # clean up object and mod files
 
