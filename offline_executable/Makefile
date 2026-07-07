@@ -413,4 +413,4 @@ run: $(prgm)
 	DATETIME=$$(date +"%Y%m%d_%H%M%S"); \
 	LOGFILE="run.$$HASH.$$DATETIME.log"; \
 	echo "Running $(prgm) and logging to $$LOGFILE..."; \
-	./$(prgm) < nl.all_CHATS7.05.2007 2>&1 | tee $$LOGFILE
+	./$(prgm) 1 < nl.CHATS7.05.2007 2>&1 | tee $$LOGFILE

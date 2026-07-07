@@ -57,11 +57,11 @@ for documentation) is available separately at https://doi.org/10.5281/zenodo.174
    A Makefile is provided to compile the code into the executable prgm.exe. The Makefile will have to be modified
    for the particular compiler. From offline_executable, use the command:
 
-   ./prgm.exe < nl.CHATS7.05.2007
+   ./prgm.exe 1 < nl.CHATS7.05.2007
 
    or
 
-   ./prgm.exe < nl.CHATS7.04.2007
+   ./prgm.exe 1 < nl.CHATS7.04.2007
 
    Input files are read from the input_files directory.
    Model output is written to the output_files directory.

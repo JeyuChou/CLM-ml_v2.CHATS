@@ -32,4 +32,4 @@ DATETIME=$(date +"%Y%m%d_%H%M%S")
 LOGFILE="run.${HASH}.${DATETIME}_OpenMP.log"
 
 export OMP_NUM_THREADS=3
-./prgm.exe < nl.all_CHATS7.05.2007 > "$LOGFILE" 2>&1
+./prgm.exe 1 < nl.CHATS7.05.2007 > "$LOGFILE" 2>&1
