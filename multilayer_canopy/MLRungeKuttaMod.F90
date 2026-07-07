@@ -115,8 +115,8 @@ module MLRungeKuttaMod
 
              if(p == 1 .and. ic ==2) then
                write(*,*) "In irk<nrk block of RungeKuttaUpdate"
-               write(*,*) 'tleaf(1,2,isun)=',tleaf(p,ic,isun),' tleaf(1,2,isha)=',tleaf(p,ic,isha)
-               write(*,*) 'isun =',isun,' isha=',isha
+               write(*,*) 'tleaf(1,2,isun)=',tleaf(p,ic,isun)
+               write(*,*) 'isun =',isun
             end if
 
              do j = 1, irk
@@ -135,11 +135,11 @@ module MLRungeKuttaMod
                   write(*,*) 'a(irk+1,j)=',a(irk+1,j),' dtleaf_sun=',dtleaf(p,ic,isun,j)
                 end if
              end do
-             if (abs(tleaf(p,ic,isun)) >= 1.e10_r8 .or. abs(tleaf(p,ic,isha)) >= 1.e10_r8) then
+             if (abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
                write(*,*) "In irk<nrk block of RungeKuttaUpdate, blowup detected"
                write(*,*) 'BLOWUP: RungeKutta intermediate irk=',irk,' p=',p,' ic=',ic, &
-                          ' tleaf_sun=',tleaf(p,ic,isun),' tleaf_sha=',tleaf(p,ic,isha), &
-                          ' dtleaf_sun=',dtleaf(p,ic,isun,irk),' dtleaf_sha=',dtleaf(p,ic,isha,irk)
+                          ' tleaf_sun=',tleaf(p,ic,isun), &
+                          ' dtleaf_sun=',dtleaf(p,ic,isun,irk)
                block
                  real(r8) :: tmp
                  tmp = 1.0e300_r8 * 1.0e300_r8
@@ -159,8 +159,8 @@ module MLRungeKuttaMod
              lwp(p,ic,isha) = lwp_bef(p,ic,isha)
              if(p == 1 .and. ic ==2) then
                write(*,*) "In irk == nrk block of RungeKuttaUpdate"
-               write(*,*) 'tleaf(1,2,isun)=',tleaf(p,ic,isun),' tleaf(1,2,isha)=',tleaf(p,ic,isha)
-               write(*,*) 'isun =',isun,' isha=',isha
+               write(*,*) 'tleaf(1,2,isun)=',tleaf(p,ic,isun)
+               write(*,*) 'isun =',isun
             end if
 
              do j = 1, nrk
@@ -172,11 +172,11 @@ module MLRungeKuttaMod
                 lwp(p,ic,isun) = lwp(p,ic,isun) + b(j) * dlwp(p,ic,isun,j)
                 lwp(p,ic,isha) = lwp(p,ic,isha) + b(j) * dlwp(p,ic,isha,j)
              end do
-             if (abs(tleaf(p,ic,isun)) >= 1.e10_r8 .or. abs(tleaf(p,ic,isha)) >= 1.e10_r8) then
+             if (abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
                write(*,*) "In irk == nrk block of RungeKuttaUpdate, blowup detected"
                write(*,*) 'BLOWUP: RungeKutta final irk=',irk,' p=',p,' ic=',ic, &
-                          ' tleaf_sun=',tleaf(p,ic,isun),' tleaf_sha=',tleaf(p,ic,isha), &
-                          ' dtleaf_sun=',dtleaf(p,ic,isun,irk),' dtleaf_sha=',dtleaf(p,ic,isha,irk)
+                          ' tleaf_sun=',tleaf(p,ic,isun), &
+                          ' dtleaf_sun=',dtleaf(p,ic,isun,irk)
                block
                  real(r8) :: tmp
                  tmp = 1.0e300_r8 * 1.0e300_r8
