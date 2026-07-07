@@ -113,6 +113,11 @@ module MLRungeKuttaMod
              lwp(p,ic,isun) = lwp_bef(p,ic,isun)
              lwp(p,ic,isha) = lwp_bef(p,ic,isha)
 
+             if(p == 1 .and. ic ==2) then
+               write(*,*) 'tleaf(1,2,isun)=',tleaf(p,ic,isun),' tleaf(1,2,isha)=',tleaf(p,ic,isha)
+               write(*,*) 'isun =',isun,' isha=',isha
+            end if
+
              do j = 1, irk
                 tair(p,ic) = tair(p,ic) + a(irk+1,j) * dtair(p,ic,j)
                 eair(p,ic) = eair(p,ic) + a(irk+1,j) * deair(p,ic,j)
@@ -143,6 +148,10 @@ module MLRungeKuttaMod
              tleaf(p,ic,isha) = tleaf_bef(p,ic,isha)
              lwp(p,ic,isun) = lwp_bef(p,ic,isun)
              lwp(p,ic,isha) = lwp_bef(p,ic,isha)
+             if(p == 1 .and. ic ==2) then
+               write(*,*) 'tleaf(1,2,isun)=',tleaf(p,ic,isun),' tleaf(1,2,isha)=',tleaf(p,ic,isha)
+               write(*,*) 'isun =',isun,' isha=',isha
+            end if
 
              do j = 1, nrk
                 tair(p,ic) = tair(p,ic) + b(j) * dtair(p,ic,j)
