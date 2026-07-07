@@ -113,12 +113,6 @@ module MLRungeKuttaMod
              lwp(p,ic,isun) = lwp_bef(p,ic,isun)
              lwp(p,ic,isha) = lwp_bef(p,ic,isha)
 
-             if(p == 1 .and. ic ==2) then
-               write(*,*) "In irk<nrk block of RungeKuttaUpdate"
-               write(*,*) '   tleaf(1,2,isun)=',tleaf(p,ic,isun)
-               write(*,*) '   isun =',isun
-            end if
-
              do j = 1, irk
                 tair(p,ic) = tair(p,ic) + a(irk+1,j) * dtair(p,ic,j)
                 eair(p,ic) = eair(p,ic) + a(irk+1,j) * deair(p,ic,j)
@@ -127,24 +121,7 @@ module MLRungeKuttaMod
                 tleaf(p,ic,isha) = tleaf(p,ic,isha) + a(irk+1,j) * dtleaf(p,ic,isha,j)
                 lwp(p,ic,isun) = lwp(p,ic,isun) + a(irk+1,j) * dlwp(p,ic,isun,j)
                 lwp(p,ic,isha) = lwp(p,ic,isha) + a(irk+1,j) * dlwp(p,ic,isha,j)
-
-                if (abs(tleaf(p,ic,isun)) >= 1.e10_r8 .and. p==1 .and. ic ==2) then
-                  write(*,*) "In irk<nrk / do j = 1, irk block of RungeKuttaUpdate"
-                  write(*,*) '   tleaf(1,2,isun)=',tleaf(p,ic,isun)
-                  write(*,*) '   irk=',irk
-                  write(*,*) '   j=',j
-                  write(*,*) '   a(irk+1,j)=',a(irk+1,j)
-                  write(*,*) '   dtleaf_sun=',dtleaf(p,ic,isun,j)
-                end if
              end do
-             if (p==1 .and. ic==2 .and. abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
-               write(*,*) "In irk<nrk block of RungeKuttaUpdate AFTER do j = 1, irk, blowup detected but not stopping"
-               write(*,*) '   BLOWUP: RungeKutta intermediate irk=', irk
-               write(*,*) '   p=',p
-               write(*,*) '   ic=',ic
-               write(*,*) '   tleaf_sun=',tleaf(p,ic,isun)
-               write(*,*) '   dtleaf_sun=',dtleaf(p,ic,isun,irk)
-             end if
 
           else if (irk == nrk) then
 
@@ -167,34 +144,7 @@ module MLRungeKuttaMod
                 lwp(p,ic,isun) = lwp(p,ic,isun) + b(j) * dlwp(p,ic,isun,j)
                 lwp(p,ic,isha) = lwp(p,ic,isha) + b(j) * dlwp(p,ic,isha,j)
              end do
-             if (p==1 .and. ic==2 .and. abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
-               write(*,*) "In irk == nrk block of RungeKuttaUpdate, blowup detected"
-               write(*,*) '   BLOWUP: RungeKutta final'
-               write(*,*) '   irk=',irk
-               write(*,*) '   p=',p
-               write(*,*) '   ic=',ic
-               write(*,*) '   tleaf_sun=',tleaf(p,ic,isun)
-               write(*,*) '   dtleaf_sun=',dtleaf(p,ic,isun,irk)
-               block
-                 real(r8) :: tmp
-                 tmp = 1.0e300_r8 * 1.0e300_r8
-               end block
-             end if
 
-          end if
-
-          if (p==1 .and. ic==2 .and. abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
-            write(*,*) "Before end of ic do-loop in RungeKuttaUpdate, blowup detected"
-            write(*,*) '   BLOWUP: RungeKutta final'
-            write(*,*) '   irk=',irk
-            write(*,*) '   p=',p
-            write(*,*) '   ic=',ic
-            write(*,*) '   tleaf_sun=',tleaf(p,ic,isun)
-            write(*,*) '   dtleaf_sun=',dtleaf(p,ic,isun,irk)
-            block
-              real(r8) :: tmp
-              tmp = 1.0e300_r8 * 1.0e300_r8
-            end block
           end if
 
        end do

@@ -107,17 +107,6 @@ contains
        den = cpleaf(p,ic) / dtime + num1 + num2 * dqsat
        tleaf(p,ic,il) = (num1 * tair(p,ic) + num2 * eair(p,ic) / pref(p) + num3) / den
 
-       if (abs(tleaf(p,ic,il)) >= 1.e10_r8) then
-         write(*,*) 'BLOWUP: LeafFluxes tleaf p=',p,' ic=',ic,' il=',il, &
-                    ' tleaf=',tleaf(p,ic,il),' den=',den, &
-                    ' num1=',num1,' num2=',num2,' num3=',num3, &
-                    ' tair=',tair(p,ic),' eair=',eair(p,ic),' pref=',pref(p)
-         block
-           real(r8) :: tmp
-           tmp = 1.0e300_r8 * 1.0e300_r8
-         end block
-       end if
-
        ! Storage flux
 
        stleaf(p,ic,il) = (tleaf(p,ic,il) - tleaf_bef(p,ic,il)) * cpleaf(p,ic) / dtime
