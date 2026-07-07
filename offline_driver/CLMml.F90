@@ -29,6 +29,7 @@ program CLMml
   do nc = 1, ntower
     call get_clump_bounds(nc, bounds)
     call CLMml_drv(bounds, configs(nc))
+    exit  ! For troubleshooting, only process one site (per thread)
   end do
   !$OMP END PARALLEL DO
 
