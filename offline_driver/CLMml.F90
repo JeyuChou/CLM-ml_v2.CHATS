@@ -27,9 +27,11 @@ program CLMml
 
   !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
   do nc = 1, ntower
+    if (nc > 1) then
+      cycle ! For troubleshooting, only process one site (per thread)
+    end if
     call get_clump_bounds(nc, bounds)
     call CLMml_drv(bounds, configs(nc))
-    exit  ! For troubleshooting, only process one site (per thread)
   end do
   !$OMP END PARALLEL DO
 
