@@ -131,6 +131,7 @@ module MLRungeKuttaMod
                 if (abs(tleaf(p,ic,isun)) >= 1.e10_r8 .and. p==1 .and. ic ==2) then
                   write(*,*) "In irk<nrk block of RungeKuttaUpdate, j=",j
                   write(*,*) 'tleaf(1,2,isun)=',tleaf(p,ic,isun)
+                  write(*,*) 'irk=',irk
                   write(*,*) 'a(irk+1,j)=',a(irk+1,j),' dtleaf_sun=',dtleaf(p,ic,isun,j)
                 end if
              end do
