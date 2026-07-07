@@ -12,4 +12,5 @@ set -euo pipefail
 export OMP_STACKSIZE=8G
 export OMP_NUM_THREADS=3
 
-. ./shared_openmp_setup.sh
+# Forward any args (e.g. --gdb) to the shared setup/build/run script.
+. ./shared_openmp_setup.sh "$@"
