@@ -320,6 +320,9 @@ module MLCanopyFluxesMod
 
        call RungeKuttaIni (ark, brk, crk)
 
+       write(*,*) 'SSRts: After RungeKuttaIni():'
+       write(*,*) '   ark(4,3) = ', ark(4,3)
+
     end if
 
     ! Copy CLM variables to multilayer canopy variables
@@ -559,7 +562,15 @@ module MLCanopyFluxesMod
 
           ! Update states for next Runge-Kutta step (but not for Euler)
 
+          write(*,*) 'SSRts before loop where RungeKuttaUpdate() is called:'
+          write(*,*) '   ark(4,3) = ', ark(4,3)
+
           if (nrk_steps > 0 .and. irk <= nrk_steps) then
+            
+            write(*,*) 'SSRts before RungeKuttaUpdate() call:'
+            write(*,*) '   irk = ', irk
+            write(*,*) '   ark(4,3) = ', ark(4,3)
+            
              call RungeKuttaUpdate (irk, ark, brk, crk, num_mlcan, filter_mlcan, mlcanopy_inst)
           end if
 
