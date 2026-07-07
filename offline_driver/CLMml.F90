@@ -2,32 +2,14 @@ program CLMml
 
   use decompMod,    only : bounds_type, get_clump_bounds, decompInit, nclumps
   use CLMml_driver, only : CLMml_drv
-  use TowerDataMod, only : tower_id, tower_num
+  use TowerDataMod, only : ntower, tower_id, tower_num
   use abortutils,   only : tower_error_flag, tower_error_msg, reset_tower_error
   use controlMod,   only : tower_config_type, read_all_configs
   implicit none
-
   integer :: nc
-  integer :: ntower
-  integer :: nargs
-  character(len=32) :: arg
 
-  type(bounds_type)                     :: bounds
-  type(tower_config_type), allocatable  :: configs(:)
-
-  write (*,*) "Reading command-line args"
-  nargs = command_argument_count()
-  if (nargs < 1) then
-    write (*,*) "ERROR: Must provide ntower as the first command-line argument"
-    stop 1
-  else if (nargs > 1) then
-    write (*,*) "ERROR: Must provide exactly one command-line argument (ntower)"
-    stop 1
-  end if
-  call get_command_argument(1, arg)
-  read (arg, *) ntower
-  allocate(configs(ntower))
-
+  type(bounds_type)        :: bounds
+  type(tower_config_type)  :: configs(ntower)
 
   write (*,*) "Starting Run!"
 

@@ -15,6 +15,7 @@ module TowerDataMod
   integer            :: tower_num              ! Tower site index (maps to TowerDataMod arrays)
   !$OMP THREADPRIVATE(tower_num)
 
+  integer, parameter :: ntower = 15            ! Number of tower sites
   character(len=6)   :: tower_id(ntower)       ! Tower site name
   real(r8)           :: tower_lat(ntower)      ! Latitude of tower (degrees)
   real(r8)           :: tower_lon(ntower)      ! Longitude of tower (degrees)
