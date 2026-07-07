@@ -183,21 +183,21 @@ module MLRungeKuttaMod
 
           end if
 
-       end do
+          if (p==1 .and. ic==2 .and. abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
+            write(*,*) "Before end of ic do-loop in RungeKuttaUpdate, blowup detected"
+            write(*,*) '   BLOWUP: RungeKutta final'
+            write(*,*) '   irk=',irk
+            write(*,*) '   p=',p
+            write(*,*) '   ic=',ic
+            write(*,*) '   tleaf_sun=',tleaf(p,ic,isun)
+            write(*,*) '   dtleaf_sun=',dtleaf(p,ic,isun,irk)
+            block
+              real(r8) :: tmp
+              tmp = 1.0e300_r8 * 1.0e300_r8
+            end block
+          end if
 
-       if (p==1 .and. ic==2 .and. abs(tleaf(p,ic,isun)) >= 1.e10_r8) then
-         write(*,*) "Before 'Now for tg' in RungeKuttaUpdate, blowup detected"
-         write(*,*) '   BLOWUP: RungeKutta final'
-         write(*,*) '   irk=',irk
-         write(*,*) '   p=',p
-         write(*,*) '   ic=',ic
-         write(*,*) '   tleaf_sun=',tleaf(p,ic,isun)
-         write(*,*) '   dtleaf_sun=',dtleaf(p,ic,isun,irk)
-         block
-           real(r8) :: tmp
-           tmp = 1.0e300_r8 * 1.0e300_r8
-         end block
-       end if
+       end do
 
        ! Now for tg
 
