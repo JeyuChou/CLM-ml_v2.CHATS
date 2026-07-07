@@ -316,11 +316,10 @@ module MLCanopyFluxesMod
           write (iulog,*) 'Successfully initialized multilayer canopy vertical structure'
        end if
 
-       ! Initialize Runge-Kutta parameters
-
-       call RungeKuttaIni (ark, brk, crk)
-
     end if
+
+    ! Initialize Runge-Kutta parameters
+    call RungeKuttaIni (ark, brk, crk)
 
     ! Copy CLM variables to multilayer canopy variables
 
