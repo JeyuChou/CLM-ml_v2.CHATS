@@ -151,6 +151,7 @@ contains
             write(*,*) "tleaf = ", tleaf(p,ic,isun)
             call endrun
          end if
+         write(*,*) "tleaf = ", tleaf(p,ic,isun)
           lw_source_sun = emleaf(patch%itype(p)) * sb * tleaf(p,ic,isun)**4
           lw_source_sha = emleaf(patch%itype(p)) * sb * tleaf(p,ic,isha)**4
           lw_source(ic) = (lw_source_sun * fracsun(p,ic) + lw_source_sha * (1._r8 - fracsun(p,ic))) &
