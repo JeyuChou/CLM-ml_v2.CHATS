@@ -128,11 +128,10 @@ module MLRungeKuttaMod
                 lwp(p,ic,isun) = lwp(p,ic,isun) + a(irk+1,j) * dlwp(p,ic,isun,j)
                 lwp(p,ic,isha) = lwp(p,ic,isha) + a(irk+1,j) * dlwp(p,ic,isha,j)
 
-                if (abs(tleaf(p,ic,isun)) >= 1.e10_r8 .or. abs(tleaf(p,ic,isha)) >= 1.e10_r8) then
+                if (abs(tleaf(p,ic,isun)) >= 1.e10_r8 .and. p==1 .and. ic ==2) then
                   write(*,*) "In irk<nrk block of RungeKuttaUpdate, j=",j
-                  write(*,*) 'tleaf(1,2,isun)=',tleaf(p,ic,isun),' tleaf(1,2,isha)=',tleaf(p,ic,isha)
-                  write(*,*) 'isun =',isun,' isha=',isha
-                  write(*,*) 'a(irk+1,j)=',a(irk+1,j),' dtleaf_sun=',dtleaf(p,ic,isun,j),' dtleaf_sha=',dtleaf(p,ic,isha,j)
+                  write(*,*) 'tleaf(1,2,isun)=',tleaf(p,ic,isun)
+                  write(*,*) 'a(irk+1,j)=',a(irk+1,j),' dtleaf_sun=',dtleaf(p,ic,isun,j)
                 end if
              end do
              if (abs(tleaf(p,ic,isun)) >= 1.e10_r8 .or. abs(tleaf(p,ic,isha)) >= 1.e10_r8) then
