@@ -32,7 +32,7 @@ prgm = prgm.exe
 
 #Intel Compiler (OpenMP -- -qopenmp enabled)
 #cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
-cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -L$(HOME)/usr/lib64 -lnetcdff -qmkl -lm
+cmplr = ifx -O0 -g -traceback -qopenmp -check all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -L$(HOME)/usr/lib64 -lnetcdff -qmkl -lm
 # Fortran 95 compiler (OpenMP -- -mp enabled)
 
 #cmplr = nvfortran -O0 -g -mp -traceback -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
