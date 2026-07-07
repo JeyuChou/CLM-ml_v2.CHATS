@@ -147,6 +147,10 @@ contains
        ! Emitted longwave radiation is weighted average of sunlit and shaded leaves
 
        do ic = nbot(p), ntop(p)
+         if(abs(tleaf(p,ic,isun)) > 1.0e10_r8) then
+            write(*,*) "tleaf = ", tleaf(p,ic,isun)
+            call endrun
+         end if
           lw_source_sun = emleaf(patch%itype(p)) * sb * tleaf(p,ic,isun)**4
           lw_source_sha = emleaf(patch%itype(p)) * sb * tleaf(p,ic,isha)**4
           lw_source(ic) = (lw_source_sun * fracsun(p,ic) + lw_source_sha * (1._r8 - fracsun(p,ic))) &
