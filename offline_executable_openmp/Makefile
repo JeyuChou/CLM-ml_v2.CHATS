@@ -21,18 +21,23 @@ drv = ../offline_driver
 
 # Directory for object files
 
-O = obj
+O = build_run_$(OMP_NUM_THREADS)threads
 
 # Executable is "prgm.exe"
 
-prgm = prgm.exe
+prgm = $(O)/prgm.exe
+
+# Build the executable by default. Declared explicitly because the order-only
+# build-directory rule ($(objs): | $(O)) is the first rule in the file and would
+# otherwise become make's default goal (building only the first object file).
+.DEFAULT_GOAL := $(prgm)
 
 #GCC Compiler (OpenMP -- -fopenmp enabled)
 #cmplr = gfortran -O0 -g -fbacktrace -fopenmp -fcheck=all -Wall -ffpe-trap=zero,invalid,overflow -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
 
 #Intel Compiler (OpenMP -- -qopenmp enabled)
 #cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
-cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -L$(HOME)/usr/lib64 -lnetcdff -qmkl -lm
+cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -module $(O) -L$(LIB_NETCDF) -I$(MOD_NETCDF) -L$(HOME)/usr/lib64 -lnetcdff -qmkl -lm
 # Fortran 95 compiler (OpenMP -- -mp enabled)
 
 #cmplr = nvfortran -O0 -g -mp -traceback -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
@@ -79,6 +84,13 @@ src2 = ${O}/initSubgridMod.o ${O}/initGridCellsMod.o ${O}/MLCanopyFluxesMod.o \
 
 objs = $(mods) $(src0) $(src1) $(src2)
 
+# Ensure the build directory exists before any object is compiled/moved into it
+
+$(objs): | $(O)
+
+$(O):
+	mkdir -p $(O)
+
 # Compile code into an executable file defined by "prgm"
 
 $(prgm): $(objs)
@@ -90,7 +102,7 @@ $(prgm): $(objs)
 	fi
 	@HASH=$$(git rev-parse --short HEAD 2>/dev/null || echo "nohash"); \
 	DATETIME=$$(date +"%Y%m%d_%H%M%S"); \
-	LOGFILE="run.$$HASH.$$DATETIME.log"; \
+	LOGFILE="$(O)/run.$$HASH.$$DATETIME.log"; \
 	echo "Compiling and logging to $$LOGFILE..."; \
 	$(cmplr) -o $(prgm) $(objs) 2>&1 | tee -p $$LOGFILE
 
@@ -411,11 +423,11 @@ ${O}/CLMml.o: ${drv}/CLMml.F90 $(mods) ${O}/CLMml_driver.o
 
 clean:
 	rm -f ${O}/*.o
-	rm -f *.mod
+	rm -f ${O}/*.mod
 	rm -f $(prgm)
 run: $(prgm)
 	@HASH=$$(git rev-parse --short HEAD 2>/dev/null || echo "nohash"); \
 	DATETIME=$$(date +"%Y%m%d_%H%M%S"); \
-	LOGFILE="run.$$HASH.$$DATETIME_OpenMP.log"; \
+	LOGFILE="$(O)/run.$$HASH.$${DATETIME}_OpenMP.log"; \
 	echo "Running $(prgm) and logging to $$LOGFILE..."; \
 	./$(prgm) < nl.all_CHATS7.05.2007 2>&1 | tee $$LOGFILE
