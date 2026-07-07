@@ -29,7 +29,9 @@ module load parallel-netcdf/1.14.0
 
 #
 export LIB_NETCDF=$NCAR_LDFLAGS_NETCDF; export MOD_NETCDF=$NCAR_INC_NETCDF
-cd /glade/u/home/lchou/CLM-ml_Sam/offline_executable_openmp
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+cd "$SCRIPT_DIR"
+mkdir -p obj
 
 HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "nohash")
 DATETIME=$(date +"%Y%m%d_%H%M%S")
