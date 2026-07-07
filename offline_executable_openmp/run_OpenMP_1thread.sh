@@ -10,6 +10,6 @@
 set -euo pipefail
 
 export OMP_STACKSIZE=8G
-export OMP_NUM_THREADS=3
+export OMP_NUM_THREADS=1
 
 . ./shared_openmp_setup.sh
