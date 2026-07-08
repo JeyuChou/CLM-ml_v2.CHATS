@@ -217,8 +217,10 @@ contains
     ! Read volumetric soil water from CLM netcdf history file
     !
     ! !USES:
-    use clm_varpar, only : nlevgrnd, nlevsoi
-    use clm_varcon, only : spval
+    use clm_varpar,    only : nlevgrnd, nlevsoi
+    use clm_varcon,    only : spval
+    use ForcingBufMod, only : use_buffer, curr_run_idx, forcing
+    use abortutils,    only : endrun
     !
     ! !ARGUMENTS:
     implicit none
@@ -238,6 +240,19 @@ contains
 
     h2osoi_clm45(:,:,:) = spval
     h2osoi_clm50(:,:,:) = spval
+
+    if (use_buffer) then
+      if (strt < 1 .or. strt > forcing(curr_run_idx)%ntim_clm) &
+        call endrun(msg='readCLMsoil: strt out of CLM buffer range')
+      if (clm_phys == 'CLM4_5') then
+        h2osoi_clm45(1,1,:) = forcing(curr_run_idx)%h2osoi(:,strt)
+      else if (clm_phys == 'CLM5_0') then
+        h2osoi_clm50(1,1,:) = forcing(curr_run_idx)%h2osoi(:,strt)
+      else
+        call endrun(msg='readCLMsoil: unknown clm_phys in buffer path')
+      end if
+      return
+    end if
 
     ! Open file
 
