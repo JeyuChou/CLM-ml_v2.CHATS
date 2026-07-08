@@ -167,12 +167,14 @@ contains
     use clmSoilOptionMod, only : clm_phys, nlev_soil_adjust
     use TowerDataMod,     only : tower_num, tower_time
     use MLclm_varctl,     only : met_type, dpai_min, pftcon_val
-    use omp_lib, only : omp_get_thread_num
+    use omp_lib,          only : omp_get_thread_num
+    use ForcingBufMod,    only : curr_run_idx
     !
     implicit none
     type(tower_config_type), intent(in) :: cfg
     !---------------------------------------------------------------------
 
+    curr_run_idx     = cfg%run_idx
     tower_num        = cfg%tower_idx
     start_date_ymd   = cfg%start_ymd
     start_date_tod   = cfg%start_tod

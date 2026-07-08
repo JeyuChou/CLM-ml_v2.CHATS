@@ -6,6 +6,8 @@ program CLMml
   use abortutils,   only : tower_error_flag, tower_error_msg, reset_tower_error
   use controlMod,   only : tower_config_type, read_all_configs
   use MLCanopyTurbulenceMod, only : LookupPsihatINI
+  use ForcingBufMod,  only : forcing, use_buffer
+  use TowerMetMod,    only : prefill_tower_met
   implicit none
   integer :: nc
 
@@ -30,6 +32,14 @@ program CLMml
   ! region. LookupPsihatINI writes shared MLclm_varcon arrays and opens a
   ! netCDF file — both are unsafe inside the OMP region.
   call LookupPsihatINI
+
+  ! Pre-read all tower met forcing into memory before the parallel region so
+  ! that readTowerMet never calls netCDF from inside an OMP thread.
+  allocate (forcing(ntower))
+  do nc = 1, ntower
+    call prefill_tower_met(configs(nc)%fin_tower, configs(nc)%ntim, forcing(nc))
+  end do
+  use_buffer = .true.
 
   !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
   do nc = 1, ntower
