@@ -20,6 +20,7 @@ module clmDataMod
   !
   ! !PUBLIC MEMBER FUNCTIONS:
   public :: clmData               ! Read CLM forcing data
+  public :: prefill_clm           ! Pre-read all CLM history slices (called before OMP region)
   !
   ! !PRIVATE MEMBER FUNCTIONS:
   private :: readCLMveg           ! Read leaf and stem area index from CLM netcdf history file
@@ -150,6 +151,8 @@ contains
     ! Read lai and sai from CLM netcdf history file
     !
     ! !USES:
+    use ForcingBufMod, only : use_buffer, curr_run_idx, forcing
+    use abortutils,    only : endrun
     !
     ! !ARGUMENTS:
     implicit none
@@ -164,6 +167,14 @@ contains
     integer :: varid                               ! netcdf variable id
     integer :: start2(2), count2(2)                ! Start and count arrays for reading 2-D data from netcdf files
     !-----------------------------------------------------------------------
+
+    if (use_buffer) then
+      if (strt < 1 .or. strt > forcing(curr_run_idx)%ntim_clm) &
+        call endrun(msg='readCLMveg: strt out of CLM buffer range')
+      elai_mod(1,1,1) = forcing(curr_run_idx)%elai(strt)
+      esai_mod(1,1,1) = forcing(curr_run_idx)%esai(strt)
+      return
+    end if
 
     ! Open file
 
@@ -316,5 +327,98 @@ contains
     status = nf_close(ncid)
 
   end subroutine readSoilWatFactor
+
+  !-----------------------------------------------------------------------
+  subroutine prefill_clm (fin, buf)
+    !
+    ! !DESCRIPTION:
+    ! Pre-read all CLM history slices (ELAI, ESAI, H2OSOI, TSOI) from fin into
+    ! buf before the OMP region. clm_phys and clm_varpar_init must be set for
+    ! this config before calling so that nlevsoi/nlevgrnd are correct.
+    !
+    ! !USES:
+    use ForcingBufMod,    only : tower_forcing_type
+    use clm_varpar,       only : nlevgrnd, nlevsoi
+    !
+    ! !ARGUMENTS:
+    implicit none
+    character(len=*),         intent(in)    :: fin  ! CLM history netCDF filename
+    type(tower_forcing_type), intent(inout) :: buf  ! Buffer to fill
+    !
+    ! !LOCAL VARIABLES:
+    integer  :: ncid, status, varid, dimid
+    integer  :: ntim_clm
+    integer  :: start2(2), count2(2)
+    integer  :: start3(3), count3(3)
+    integer  :: nlev_h2osoi
+    real(r8), allocatable :: tmp1(:)      ! (ntim_clm) for 2-D variables
+    real(r8), allocatable :: tmp2(:,:)    ! (nlev, ntim_clm) for 3-D variables
+    !---------------------------------------------------------------------
+
+    status = nf_open(fin, nf_nowrite, ncid)
+    if (status /= nf_noerr) call handle_err(status, fin)
+
+    ! Inquire the length of the time dimension
+    status = nf_inq_dimid(ncid, "time", dimid)
+    if (status /= nf_noerr) call handle_err(status, "time dim")
+    status = nf_inq_dimlen(ncid, dimid, ntim_clm)
+    if (status /= nf_noerr) call handle_err(status, "time dim len")
+
+    buf%ntim_clm = ntim_clm
+    allocate (tmp1(ntim_clm))
+
+    ! --- ELAI (lndgrid, time) ---
+    allocate (buf%elai(ntim_clm))
+    start2 = (/ 1, 1 /)
+    count2 = (/ 1, ntim_clm /)
+    status = nf_inq_varid(ncid, "ELAI", varid)
+    if (status /= nf_noerr) call handle_err(status, "ELAI")
+    status = nf_get_vara_double(ncid, varid, start2, count2, tmp1)
+    if (status /= nf_noerr) call handle_err(status, "ELAI")
+    buf%elai(:) = tmp1
+
+    ! --- ESAI (lndgrid, time) ---
+    allocate (buf%esai(ntim_clm))
+    status = nf_inq_varid(ncid, "ESAI", varid)
+    if (status /= nf_noerr) call handle_err(status, "ESAI")
+    status = nf_get_vara_double(ncid, varid, start2, count2, tmp1)
+    if (status /= nf_noerr) call handle_err(status, "ESAI")
+    buf%esai(:) = tmp1
+
+    deallocate (tmp1)
+
+    ! --- H2OSOI (lndgrid, nlev, time) — level count depends on clm_phys ---
+    if (clm_phys == 'CLM4_5') then
+       nlev_h2osoi = nlevgrnd
+    else
+       nlev_h2osoi = nlevsoi
+    end if
+    buf%nlev_h2osoi = nlev_h2osoi
+    allocate (buf%h2osoi(nlev_h2osoi, ntim_clm))
+    allocate (tmp2(nlev_h2osoi, ntim_clm))
+    start3 = (/ 1, 1, 1 /)
+    count3 = (/ 1, nlev_h2osoi, ntim_clm /)
+    status = nf_inq_varid(ncid, "H2OSOI", varid)
+    if (status /= nf_noerr) call handle_err(status, "H2OSOI")
+    status = nf_get_vara_double(ncid, varid, start3, count3, tmp2)
+    if (status /= nf_noerr) call handle_err(status, "H2OSOI")
+    buf%h2osoi(:,:) = tmp2
+    deallocate (tmp2)
+
+    ! --- TSOI (lndgrid, nlevgrnd, time) — always nlevgrnd levels ---
+    buf%nlev_tsoi = nlevgrnd
+    allocate (buf%tsoi(nlevgrnd, ntim_clm))
+    allocate (tmp2(nlevgrnd, ntim_clm))
+    count3 = (/ 1, nlevgrnd, ntim_clm /)
+    status = nf_inq_varid(ncid, "TSOI", varid)
+    if (status /= nf_noerr) call handle_err(status, "TSOI")
+    status = nf_get_vara_double(ncid, varid, start3, count3, tmp2)
+    if (status /= nf_noerr) call handle_err(status, "TSOI")
+    buf%tsoi(:,:) = tmp2
+    deallocate (tmp2)
+
+    status = nf_close(ncid)
+
+  end subroutine prefill_clm
 
 end module clmDataMod

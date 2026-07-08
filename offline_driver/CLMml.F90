@@ -6,8 +6,11 @@ program CLMml
   use abortutils,   only : tower_error_flag, tower_error_msg, reset_tower_error
   use controlMod,   only : tower_config_type, read_all_configs
   use MLCanopyTurbulenceMod, only : LookupPsihatINI
-  use ForcingBufMod,  only : forcing, use_buffer
-  use TowerMetMod,    only : prefill_tower_met
+  use ForcingBufMod,      only : forcing, use_buffer
+  use TowerMetMod,        only : prefill_tower_met
+  use clmDataMod,         only : prefill_clm
+  use clmSoilOptionMod,   only : clm_phys
+  use clm_varpar,         only : clm_varpar_init
   implicit none
   integer :: nc
 
@@ -38,6 +41,9 @@ program CLMml
   allocate (forcing(ntower))
   do nc = 1, ntower
     call prefill_tower_met(configs(nc)%fin_tower, configs(nc)%ntim, forcing(nc))
+    clm_phys = configs(nc)%clm_phys
+    call clm_varpar_init()
+    call prefill_clm(configs(nc)%fin_clm, forcing(nc))
   end do
   use_buffer = .true.
 
