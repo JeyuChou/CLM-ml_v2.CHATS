@@ -47,7 +47,7 @@ cmplr = ifx -O0 -g -traceback -qopenmp -check all -check noarg_temp_created -war
 # Specify module files (that all other files use). Order matters, because some files
 # are used by other files in mods list
 
-mods = ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/clm_varctl.o ${O}/MLclm_varctl.o ${O}/clmSoilOptionMod.o ${O}/clm_varpar.o \
+mods = ${O}/shr_kind_mod.o ${O}/ForcingBufMod.o ${O}/clm_varcon.o ${O}/clm_varctl.o ${O}/MLclm_varctl.o ${O}/clmSoilOptionMod.o ${O}/clm_varpar.o \
 	${O}/MLclm_varcon.o ${O}/MLclm_varpar.o ${O}/spmdMod.o \
 	${O}/ColumnType.o ${O}/PatchType.o ${O}/GridcellType.o \
 	${O}/CanopyStateType.o ${O}/EnergyFluxType.o ${O}/FrictionVelocityMod.o ${O}/SoilStateType.o \
@@ -110,6 +110,9 @@ $(prgm): $(objs)
 
 ${O}/shr_kind_mod.o: ${shr}/shr_kind_mod.F90
 	$(cmplr) -c ${shr}/shr_kind_mod.F90 -o ${O}/shr_kind_mod.o
+
+${O}/ForcingBufMod.o: ${main}/ForcingBufMod.F90 ${O}/shr_kind_mod.o
+	$(cmplr) -c ${main}/ForcingBufMod.F90 -o ${O}/ForcingBufMod.o
 
 ${O}/shr_file_mod.o: ${shr}/shr_file_mod.F90 ${O}/shr_kind_mod.o ${O}/clm_varctl.o ${O}/abortutils.o
 	$(cmplr) -c ${shr}/shr_file_mod.F90 -o ${O}/shr_file_mod.o
