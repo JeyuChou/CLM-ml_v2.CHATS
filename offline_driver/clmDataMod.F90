@@ -21,6 +21,7 @@ module clmDataMod
   ! !PUBLIC MEMBER FUNCTIONS:
   public :: clmData               ! Read CLM forcing data
   public :: prefill_clm           ! Pre-read all CLM history slices (called before OMP region)
+  public :: prefill_factor        ! Pre-read soil moisture adjustment factor (called before OMP region)
   !
   ! !PRIVATE MEMBER FUNCTIONS:
   private :: readCLMveg           ! Read leaf and stem area index from CLM netcdf history file
@@ -304,6 +305,8 @@ contains
     ! Read soil moisture adjustment from netcdf file
     !
     ! !USES:
+    use ForcingBufMod, only : use_buffer, curr_run_idx, forcing
+    use abortutils,    only : endrun
     !
     ! !ARGUMENTS:
     implicit none
@@ -317,6 +320,15 @@ contains
     integer :: varid                               ! netcdf variable id
     integer :: start1(1), count1(1)                ! Start and count arrays for reading 1-D data from netcdf files
     !-----------------------------------------------------------------------
+
+    if (use_buffer) then
+      if (.not. forcing(curr_run_idx)%have_factor) &
+        call endrun(msg='readSoilWatFactor: factor buffer not populated for this tower')
+      if (strt < 1 .or. strt > forcing(curr_run_idx)%ntim_fac) &
+        call endrun(msg='readSoilWatFactor: strt out of factor buffer range')
+      h2osoi_factor_loc(1,1,1) = forcing(curr_run_idx)%factor(strt)
+      return
+    end if
 
     ! Open file
 
@@ -342,6 +354,52 @@ contains
     status = nf_close(ncid)
 
   end subroutine readSoilWatFactor
+
+  !-----------------------------------------------------------------------
+  subroutine prefill_factor (fin, buf)
+    !
+    ! !DESCRIPTION:
+    ! Pre-read all soil moisture adjustment factor slices from fin into buf
+    ! before the OMP region. Only called when nlev_soil_adjust > 0.
+    !
+    ! !USES:
+    use ForcingBufMod, only : tower_forcing_type
+    !
+    ! !ARGUMENTS:
+    implicit none
+    character(len=*),         intent(in)    :: fin  ! Soil-adjust netCDF filename
+    type(tower_forcing_type), intent(inout) :: buf  ! Buffer to fill
+    !
+    ! !LOCAL VARIABLES:
+    integer :: ncid, status, varid
+    integer :: dimids(1), ntim_fac
+    integer :: start1(1), count1(1)
+    !---------------------------------------------------------------------
+
+    status = nf_open(fin, nf_nowrite, ncid)
+    if (status /= nf_noerr) call handle_err(status, fin)
+
+    ! Inquire the length of the FACTOR dimension from the variable itself
+    ! (avoids assuming a specific dimension name in the file)
+    status = nf_inq_varid(ncid, "FACTOR", varid)
+    if (status /= nf_noerr) call handle_err(status, "FACTOR")
+    status = nf_inq_vardimid(ncid, varid, dimids)
+    if (status /= nf_noerr) call handle_err(status, "FACTOR dimids")
+    status = nf_inq_dimlen(ncid, dimids(1), ntim_fac)
+    if (status /= nf_noerr) call handle_err(status, "FACTOR dimlen")
+
+    buf%ntim_fac = ntim_fac
+    allocate(buf%factor(ntim_fac))
+
+    start1 = (/ 1 /)
+    count1 = (/ ntim_fac /)
+    status = nf_get_vara_double(ncid, varid, start1, count1, buf%factor)
+    if (status /= nf_noerr) call handle_err(status, "FACTOR")
+
+    buf%have_factor = .true.
+    status = nf_close(ncid)
+
+  end subroutine prefill_factor
 
   !-----------------------------------------------------------------------
   subroutine prefill_clm (fin, buf)

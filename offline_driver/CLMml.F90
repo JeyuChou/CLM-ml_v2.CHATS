@@ -8,7 +8,7 @@ program CLMml
   use MLCanopyTurbulenceMod, only : LookupPsihatINI
   use ForcingBufMod,      only : forcing, use_buffer
   use TowerMetMod,        only : prefill_tower_met
-  use clmDataMod,         only : prefill_clm
+  use clmDataMod,         only : prefill_clm, prefill_factor
   use clmSoilOptionMod,   only : clm_phys
   use clm_varpar,         only : clm_varpar_init
   implicit none
@@ -44,6 +44,8 @@ program CLMml
     clm_phys = configs(nc)%clm_phys
     call clm_varpar_init()
     call prefill_clm(configs(nc)%fin_clm, forcing(nc))
+    if (configs(nc)%nlev_soil_adjust > 0) &
+      call prefill_factor(configs(nc)%fin_soil_adjust, forcing(nc))
   end do
   use_buffer = .true.
 
