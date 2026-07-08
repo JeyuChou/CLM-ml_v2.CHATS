@@ -27,6 +27,9 @@ program CLMml
 
   !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
   do nc = 1, ntower
+    if (nc > 3) then
+      cycle
+    end if
     call get_clump_bounds(nc, bounds)
     call CLMml_drv(bounds, configs(nc))
   end do
