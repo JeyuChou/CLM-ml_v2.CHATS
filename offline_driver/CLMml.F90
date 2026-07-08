@@ -5,6 +5,7 @@ program CLMml
   use TowerDataMod, only : ntower, tower_id, tower_num
   use abortutils,   only : tower_error_flag, tower_error_msg, reset_tower_error
   use controlMod,   only : tower_config_type, read_all_configs
+  use MLCanopyTurbulenceMod, only : LookupPsihatINI
   implicit none
   integer :: nc
 
@@ -24,6 +25,11 @@ program CLMml
   ! One clump per tower — each OMP thread will process one tower at a time
   call decompInit(ntower)
   write(*,*) "Initialized decomposition."
+
+  ! Read RSL psihat look-up tables once, single-threaded, before the parallel
+  ! region. LookupPsihatINI writes shared MLclm_varcon arrays and opens a
+  ! netCDF file — both are unsafe inside the OMP region.
+  call LookupPsihatINI
 
   !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
   do nc = 1, ntower
