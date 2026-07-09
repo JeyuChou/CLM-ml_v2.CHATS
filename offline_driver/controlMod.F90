@@ -169,6 +169,7 @@ contains
     use MLclm_varctl,     only : met_type, dpai_min, pftcon_val
     use omp_lib,          only : omp_get_thread_num
     use ForcingBufMod,    only : curr_run_idx
+    use clm_varpar,       only : clm_varpar_init
     !
     implicit none
     type(tower_config_type), intent(in) :: cfg
@@ -180,6 +181,7 @@ contains
     start_date_tod   = cfg%start_tod
     dtstep           = tower_time(tower_num) * 60
     clm_phys         = cfg%clm_phys
+    call clm_varpar_init()
     write(*,*) 'DEBUG apply_config: thread=', omp_get_thread_num(), &
            ' setting clm_phys="', trim(clm_phys), '" from cfg="', trim(cfg%clm_phys), '"'
     nlev_soil_adjust = cfg%nlev_soil_adjust
