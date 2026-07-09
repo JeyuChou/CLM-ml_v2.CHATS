@@ -116,7 +116,10 @@ contains
     itim = 1
     call get_curr_date (yr, mon, day, curr_date_tod)
 
-    write (*,*) '--- Processing tower: ', tower_id(tower_num), '  (', yr, '-', mon, ') --- Thread:', omp_get_thread_num()
+    write (*,*) '--- Processing tower: ', tower_id(tower_num), &
+         '  tower_idx=', tower_num, '  run_idx=', cfg%run_idx, &
+         '  (', yr, '-', mon, ')  Thread:', omp_get_thread_num(), &
+         merge(' [MASTER]', '         ', omp_get_thread_num() == 0)
     write (iulog,*) 'Processing: ',tower_id(tower_num),yr,mon
 
     !---------------------------------------------------------------
