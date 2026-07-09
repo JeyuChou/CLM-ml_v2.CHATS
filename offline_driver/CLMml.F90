@@ -1,7 +1,7 @@
 program CLMml
 
   use decompMod,    only : bounds_type, get_clump_bounds, decompInit, nclumps
-  use CLMml_driver, only : CLMml_drv
+  use CLMml_driver, only : CLMml_drv, clm_initialized
   use TowerDataMod, only : ntower, tower_id, tower_num
   use abortutils,   only : tower_error_flag, tower_error_msg, reset_tower_error
   use controlMod,   only : tower_config_type, read_all_configs
@@ -49,7 +49,7 @@ program CLMml
   end do
   use_buffer = .true.
 
-  !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC)
+  !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC) COPYIN(clm_initialized)
   do nc = 1, ntower
     if (nc > 3) then
       cycle

@@ -130,7 +130,6 @@ contains
     ! one patch (one grid cell with one column and one patch).
     !---------------------------------------------------------------
 
-    clm_initialized = .false.   ! explicitly reset per-tower so all threads call InitializeRealize
     !$OMP CRITICAL(hdf5_io)
     if (.not. clm_initialized) then
        call InitializeRealize (bounds)
