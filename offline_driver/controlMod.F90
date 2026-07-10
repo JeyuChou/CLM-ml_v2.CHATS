@@ -84,6 +84,8 @@ contains
     character(len=6)   :: clm_phys
     integer            :: nlev_soil_adjust
     integer            :: i, dtstep_local, steps_per_day
+    character(len=256) :: dirout_env
+    integer            :: env_len, env_stat
 
     namelist /clmML_inparm/ tower_name, start_ymd, start_tod, stop_option,  &
       stop_n, fin_tower, fin_clm, clm_start_ymd, clm_start_tod, clm_phys,   &
@@ -111,6 +113,18 @@ contains
     write(iulog,*) 'Attempting to read namelist file .....'
     read (5, clmML_inparm)
     write(iulog,*) 'Successfully read namelist file'
+
+    ! Optional runtime override of the output directory. If the environment
+    ! variable CLMML_DIROUT is set and non-empty it takes precedence over the
+    ! namelist 'dirout'. The OpenMP run wrappers use this to route output into
+    ! the per-thread-count build_run_* directory; when unset, the namelist
+    ! value (default '../output_files/') is used.
+    call get_environment_variable('CLMML_DIROUT', dirout_env, &
+         length=env_len, status=env_stat)
+    if (env_stat == 0 .and. env_len > 0) then
+      dirout = trim(dirout_env)
+    end if
+    write(iulog,*) 'Output directory (dirout) = ', trim(dirout)
 
     ! Resolve tower_name to an integer index
     cfg%tower_idx = 0
