@@ -1,20 +1,55 @@
 #!/bin/bash
-# compare_to_golden.sh <run_output_dir> <reference_dir>
+# compare_to_golden.sh [-v|--verbose] <run_output_dir> <reference_dir>
 #
 # Compares every *.out file in <reference_dir> against <run_output_dir>.
 # Exact text match is required (outputs are fixed-format ASCII).
 # Prints PASS or FAIL and exits nonzero on any mismatch or missing file.
 # Extra *.out files in the run dir (not in reference) are also flagged.
+#
+# By default only summary messages are printed. Pass -v/--verbose to also
+# print the full diff for each file that differs.
 
 set -euo pipefail
 
-if [ $# -ne 2 ]; then
-    echo "Usage: $0 <run_output_dir> <reference_dir>" >&2
+usage() {
+    echo "Usage: $0 [-v|--verbose] <run_output_dir> <reference_dir>" >&2
+}
+
+VERBOSE=false
+POSITIONAL=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --)
+            shift
+            while [ $# -gt 0 ]; do POSITIONAL+=("$1"); shift; done
+            ;;
+        -*)
+            echo "ERROR: unknown option '$1'" >&2
+            usage
+            exit 1
+            ;;
+        *)
+            POSITIONAL+=("$1")
+            shift
+            ;;
+    esac
+done
+
+if [ ${#POSITIONAL[@]} -ne 2 ]; then
+    usage
     exit 1
 fi
 
-RUN_DIR="$1"
-REF_DIR="$2"
+RUN_DIR="${POSITIONAL[0]}"
+REF_DIR="${POSITIONAL[1]}"
 
 [[ -d "$RUN_DIR" ]] || { echo "ERROR: '$RUN_DIR' is not a directory" >&2; exit 1; }
 [[ -d "$REF_DIR" ]] || { echo "ERROR: '$REF_DIR' is not a directory" >&2; exit 1; }
@@ -42,7 +77,9 @@ while IFS= read -r ref_file; do
         PASS=false
     elif ! diff -q "$ref_file" "$run_file" > /dev/null; then
         echo "  DIFFER: $fname"
-        diff "$ref_file" "$run_file" || true
+        if $VERBOSE; then
+            diff "$ref_file" "$run_file" || true
+        fi
         PASS=false
     fi
 done < <(find "$REF_DIR" -maxdepth 1 -name '*.out' | sort)
