@@ -81,6 +81,8 @@ while IFS= read -r ref_file; do
             diff "$ref_file" "$run_file" || true
         fi
         PASS=false
+    else
+        echo "  MATCH: $fname"
     fi
 done < <(find "$REF_DIR" -maxdepth 1 -name '*.out' | sort)
 
