@@ -6,8 +6,27 @@
 # To remove obj files and mod files: type 'make clean'
 # ###############################################
 
+# Set netcdf paths
+ifeq ($(strip $(NCAR_LDFLAGS_NETCDF)),)
+LIB_NETCDF = $(NETCDF_PATH)/lib
+else
 LIB_NETCDF = $(NCAR_LDFLAGS_NETCDF)
+endif
+ifeq ($(strip $(NCAR_INC_NETCDF)),)
+MOD_NETCDF = $(NETCDF_PATH)/include
+else
 MOD_NETCDF = $(NCAR_INC_NETCDF)
+endif
+
+# Choose intel compiler
+IFX_AVAILABLE := $(shell command -v ifx 2>/dev/null)
+ifneq ($(IFX_AVAILABLE),)
+    # ifx is available
+    FC := ifx
+else
+    # ifx is not available
+    FC := ifort
+endif
 
 # Source code directories
 
@@ -32,17 +51,8 @@ prgm = $(O)/prgm.exe
 # otherwise become make's default goal (building only the first object file).
 .DEFAULT_GOAL := $(prgm)
 
-#GCC Compiler (OpenMP -- -fopenmp enabled)
-#cmplr = gfortran -O0 -g -fbacktrace -fopenmp -fcheck=all -Wall -ffpe-trap=zero,invalid,overflow -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
-
 #Intel Compiler (OpenMP -- -qopenmp enabled)
-#cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
-cmplr = ifx -O0 -g -traceback -qopenmp -check all -check noarg_temp_created -warn all -fpe0 -module $(O) -L$(LIB_NETCDF) -I$(MOD_NETCDF) -L$(HOME)/usr/lib64 -lnetcdff -qmkl -lm
-# Fortran 95 compiler (OpenMP -- -mp enabled)
-
-#cmplr = nvfortran -O0 -g -mp -traceback -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
-
-#cmplr = nvfortran -O2 -mp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
+cmplr = $(FC) -O0 -g -traceback -qopenmp -check all -check noarg_temp_created -warn all -fpe0 -module $(O) -L$(LIB_NETCDF) -I$(MOD_NETCDF) -L$(HOME)/usr/lib64 -lnetcdff -qmkl -lm
 
 # Specify module files (that all other files use). Order matters, because some files
 # are used by other files in mods list
