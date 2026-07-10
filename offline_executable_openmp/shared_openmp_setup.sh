@@ -56,8 +56,10 @@ mkdir -p "$BUILD_DIR"
 # Route model output into an output_files/ subdir of this run's build_run_*
 # dir (see CLMML_DIROUT in controlMod.F90). Trailing slash required — dirout
 # is prepended directly to filenames.
-mkdir -p "${BUILD_DIR}/output_files"
-export CLMML_DIROUT="./${BUILD_DIR}/output_files/"
+outdir="${BUILD_DIR}/output_files"
+rm -rf "${outdir}"
+mkdir "${outdir}"
+export CLMML_DIROUT="./${outdir}/"
 
 HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "nohash")
 DATETIME=$(date +"%Y%m%d_%H%M%S")
