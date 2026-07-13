@@ -103,6 +103,7 @@ contains
     ! !USES:
     use TowerDataMod, only : tower_num, tower_pft
     use PatchType, only : patch
+    use clm_varcon, only : spval
     !
     ! !ARGUMENTS:
     implicit none
@@ -125,6 +126,22 @@ contains
 
     ! Re-set soil color class for the new tower (albedo lookup tables unchanged)
     call SurfaceAlbedoInitTimeConst(bounds)
+
+    ! Reset the canopy reference height sentinel so MLCanopyFluxes re-runs
+    ! initVerticalStructure + initVerticalProfiles on the first timestep of
+    ! this tower.  Those routines re-initialize tleaf, lwp, h2ocan, tg, and
+    ! the canopy layer counts from fresh met data — without this reset,
+    ! ml_vert_init stays 0 and all of those carry over from the previous
+    ! tower's end state, causing tower-to-tower divergence.
+    !
+    ! FRAGILITY NOTE: this works because zref_forcing == spval is the sole
+    ! gate for the ml_vert_init block.  If a future mlcanopy_inst variable
+    ! persists across timesteps and is NOT reset inside that block, it will
+    ! silently carry over and this reset won't protect against it.  The
+    ! robust long-term fix is to make InitializeRealize idempotent
+    ! (if-not-allocated guards in grc%Init, col%Init, patch%Init, etc.)
+    ! so every tower can call it from a clean slate.
+    mlcanopy_inst%zref_forcing(:) = spval
 
   end subroutine clm_instReset
 
