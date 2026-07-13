@@ -116,8 +116,10 @@ contains
     itim = 1
     call get_curr_date (yr, mon, day, curr_date_tod)
 
-    write (*,*) '--- Processing tower: ', tower_id(tower_num), '  (', yr, '-', mon, ') --- Thread:', omp_get_thread_num()
-    write (iulog,*) 'Processing: ',tower_id(tower_num),yr,mon
+    write (iulog,*) 'Processing: ', tower_id(tower_num), &
+         '  tower_idx=', tower_num, '  run_idx=', cfg%run_idx, &
+         '  (', yr, '-', mon, ')  Thread:', omp_get_thread_num(), &
+         merge(' [MASTER]', '         ', omp_get_thread_num() == 0)
 
     !---------------------------------------------------------------
     ! Initialize CLM
@@ -128,16 +130,14 @@ contains
     ! one patch (one grid cell with one column and one patch).
     !---------------------------------------------------------------
 
-    !$OMP CRITICAL(hdf5_io)
     if (.not. clm_initialized) then
        call InitializeRealize (bounds)
-       clm_initialized = .true.   ! set before return so re-entry uses clm_instReset
+       clm_initialized = .true.
        if (.not. tower_error_flag) call setFilters (filter)
     else
        call clm_instReset (bounds)
        if (.not. tower_error_flag) call setFilters (filter)
     end if
-    !$OMP END CRITICAL(hdf5_io)
     if (tower_error_flag) return
 
     !---------------------------------------------------------------
@@ -150,10 +150,8 @@ contains
     ! Read tower meteorology data once to get acclimation temperature
     !---------------------------------------------------------------
 
-    !$OMP CRITICAL(hdf5_io)
     call init_acclim (fin_tower, tower_num, ntim, bounds%begp, bounds%endp, &
     atm2lnd_inst, wateratm2lndbulk_inst, temperature_inst, frictionvel_inst, mlcanopy_inst)
-    !$OMP END CRITICAL(hdf5_io)
     if (tower_error_flag) return
 
     !---------------------------------------------------------------
@@ -196,10 +194,8 @@ contains
 
     ! Read history file
 
-    !$OMP CRITICAL(hdf5_io)
     call SoilInit (fin_clm, time_indx, bounds%begc, bounds%endc, soilstate_inst, &
     waterstatebulk_inst, temperature_inst)
-    !$OMP END CRITICAL(hdf5_io)
     if (tower_error_flag) return
 
     !---------------------------------------------------------------
@@ -329,7 +325,10 @@ contains
     if (tower_error_flag) then
        write (iulog,*) 'TOWER FAILED: ', tower_id(tower_num), ': ', trim(tower_error_msg)
     else
-       write (iulog,*) 'Successfully finished simulation: ', tower_id(tower_num), ' Thread:', omp_get_thread_num()
+       write (iulog,*) 'Successfully finished simulation: ', tower_id(tower_num), &
+            '  tower_idx=', tower_num, '  run_idx=', cfg%run_idx, &
+            '  Thread:', omp_get_thread_num(), &
+            merge(' [MASTER]', '         ', omp_get_thread_num() == 0)
     end if
     !$OMP END CRITICAL(error_report)
 
@@ -500,7 +499,7 @@ contains
     ! history file
     !
     ! !USES:
-    use abortutils, only : handle_err, tower_error_flag
+    use abortutils, only : handle_err, tower_error_flag, endrun
     use clm_varcon, only : denh2o
     use clm_varpar, only : nlevgrnd, nlevsoi
     use ColumnType, only : col
@@ -508,6 +507,7 @@ contains
     use WaterStateBulkType, only : waterstatebulk_type
     use TemperatureType, only : temperature_type
     use clmSoilOptionMod, only : clm_phys
+    use ForcingBufMod, only : use_buffer, curr_run_idx, forcing
     !
     ! !ARGUMENTS:
     implicit none
@@ -540,6 +540,19 @@ contains
     h2osoi_ice  => waterstatebulk_inst%h2osoi_ice_col, &  ! CLM: Soil layer ice lens (kg H2O/m2)
     h2osoi_liq  => waterstatebulk_inst%h2osoi_liq_col  &  ! CLM: Soil layer liquid water (kg H2O/m2)
     )
+
+    if (use_buffer) then
+      if (strt < 1 .or. strt > forcing(curr_run_idx)%ntim_clm) &
+        call endrun(msg='SoilInit: strt out of CLM buffer range')
+      tsoi_loc(1,1,:) = forcing(curr_run_idx)%tsoi(:, strt)
+      if (clm_phys == 'CLM4_5') then
+        h2osoi_loc_clm45(1,1,:) = forcing(curr_run_idx)%h2osoi(:, strt)
+      else if (clm_phys == 'CLM5_0') then
+        h2osoi_loc_clm50(1,1,:) = forcing(curr_run_idx)%h2osoi(:, strt)
+      else
+        call endrun(msg='SoilInit: unknown clm_phys in buffer path')
+      end if
+    else
 
     ! Open file
 
@@ -583,6 +596,8 @@ contains
     ! Close file
 
     status = nf_close(ncid)
+
+    end if
 
     ! Copy data to model variables
 

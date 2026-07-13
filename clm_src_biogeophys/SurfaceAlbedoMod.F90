@@ -21,7 +21,7 @@ module SurfaceAlbedoMod
   real(r8), allocatable, private :: albsat(:,:) ! Wet soil albedo by color class and waveband (1=vis,2=nir)
   real(r8), allocatable, private :: albdry(:,:) ! Dry soil albedo by color class and waveband (1=vis,2=nir)
   integer , allocatable, public  :: isoicol(:)  ! Column soil color class (per-thread: varies by tower)
-  !$OMP THREADPRIVATE(isoicol)
+  !$OMP THREADPRIVATE(isoicol, albsat, albdry)
   !-----------------------------------------------------------------------
 
 contains
@@ -58,14 +58,12 @@ contains
     ! and numrad wavebands (1=vis, 2=nir)
 
     mxsoil_color = 20
-    !$OMP CRITICAL(albsat_alloc)
     if (.not. allocated(albsat)) then
        allocate (albsat(mxsoil_color,numrad), albdry(mxsoil_color,numrad), stat=ier)
        if (ier /= 0) then
           call endrun (msg=' ERROR: SurfaceAlbedoInitTimeConst: allocation error for albsat, albdry')
        end if
     end if
-    !$OMP END CRITICAL(albsat_alloc)
 
     if (mxsoil_color == 8) then
        albsat(1:8,ivis) = (/0.12_r8,0.11_r8,0.10_r8,0.09_r8,0.08_r8,0.07_r8,0.06_r8,0.05_r8/)

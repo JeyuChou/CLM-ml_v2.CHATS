@@ -20,6 +20,7 @@ module TowerMetMod
   ! !PUBLIC MEMBER FUNCTIONS:
   public :: TowerMetCurr       ! Read atmospheric forcing for current timestep
   public :: TowerMetNext       ! Read atmospheric forcing for next timestep
+  public :: prefill_tower_met  ! Pre-read all met time slices (called before OMP region)
   !
   ! !PRIVATE MEMBER FUNCTIONS:
   private :: readTowerMet      ! Read variables from netcdf file
@@ -293,6 +294,9 @@ contains
     ! Read variables from tower site atmospheric forcing netcdf files
     !
     ! !USES:
+    use ForcingBufMod, only : use_buffer, curr_run_idx, forcing, &
+                               imet_zbot, imet_tbot, imet_rh, imet_qbot, &
+                               imet_wind, imet_fsds, imet_flds, imet_pbot, imet_prect
     !
     ! !ARGUMENTS:
     implicit none
@@ -314,6 +318,19 @@ contains
     integer :: varid                            ! netcdf variable id
     integer :: start3(3), count3(3)             ! start and count arrays for reading 3-D data from netcdf files
     !---------------------------------------------------------------------
+
+    if (use_buffer) then
+      zbot(1,1,1)    = forcing(curr_run_idx)%met(imet_zbot,  strt)
+      tbot(1,1,1)    = forcing(curr_run_idx)%met(imet_tbot,  strt)
+      rhbot(1,1,1)   = forcing(curr_run_idx)%met(imet_rh,    strt)
+      qbot(1,1,1)    = forcing(curr_run_idx)%met(imet_qbot,  strt)
+      ubot(1,1,1)    = forcing(curr_run_idx)%met(imet_wind,  strt)
+      fsdsbot(1,1,1) = forcing(curr_run_idx)%met(imet_fsds,  strt)
+      fldsbot(1,1,1) = forcing(curr_run_idx)%met(imet_flds,  strt)
+      pbot(1,1,1)    = forcing(curr_run_idx)%met(imet_pbot,  strt)
+      prect(1,1,1)   = forcing(curr_run_idx)%met(imet_prect, strt)
+      return
+    end if
 
     status = nf_open(ncfilename, nf_nowrite, ncid)
     if (status /= nf_noerr) call handle_err(status, ncfilename)
@@ -502,5 +519,122 @@ contains
 
     end associate
   end subroutine TowerMetNext
+
+  !-----------------------------------------------------------------------
+  subroutine prefill_tower_met (fin, ntim, buf)
+    !
+    ! !DESCRIPTION:
+    ! Pre-read all met time slices from fin into buf%met before the OMP region.
+    ! Reproduces the exact optional-variable presence logic of readTowerMet.
+    !
+    ! !USES:
+    use ForcingBufMod, only : tower_forcing_type, nmetvar, &
+                               imet_zbot, imet_tbot, imet_rh, imet_qbot, &
+                               imet_wind, imet_fsds, imet_flds, imet_pbot, imet_prect
+    !
+    ! !ARGUMENTS:
+    implicit none
+    character(len=*),         intent(in)    :: fin   ! Tower met netCDF filename
+    integer,                  intent(in)    :: ntim  ! Number of time slices
+    type(tower_forcing_type), intent(inout) :: buf   ! Buffer to fill
+    !
+    ! !LOCAL VARIABLES:
+    integer  :: ncid, status, varid
+    integer  :: start3(3), count3(3)
+    real(r8), allocatable :: tmp(:)
+    !---------------------------------------------------------------------
+
+    buf%ntim_met = ntim
+    allocate (buf%met(nmetvar, ntim))
+    allocate (tmp(ntim))
+
+    status = nf_open(fin, nf_nowrite, ncid)
+    if (status /= nf_noerr) call handle_err(status, fin)
+
+    start3 = (/ 1, 1, 1 /)
+    count3 = (/ 1, 1, ntim /)
+
+    ! FLDS — optional
+    status = nf_inq_varid(ncid, "FLDS", varid)
+    if (status == nf_noerr) then
+       status = nf_get_vara_double(ncid, varid, start3, count3, tmp)
+       if (status /= nf_noerr) call handle_err(status, "FLDS")
+       buf%met(imet_flds, :) = tmp
+    else
+       buf%met(imet_flds, :) = -999._r8
+    end if
+
+    ! FSDS — required
+    status = nf_inq_varid(ncid, "FSDS", varid)
+    if (status /= nf_noerr) call handle_err(status, "FSDS")
+    status = nf_get_vara_double(ncid, varid, start3, count3, tmp)
+    if (status /= nf_noerr) call handle_err(status, "FSDS")
+    buf%met(imet_fsds, :) = tmp
+
+    ! PSRF — optional
+    status = nf_inq_varid(ncid, "PSRF", varid)
+    if (status == nf_noerr) then
+       status = nf_get_vara_double(ncid, varid, start3, count3, tmp)
+       if (status /= nf_noerr) call handle_err(status, "PSRF")
+       buf%met(imet_pbot, :) = tmp
+    else
+       buf%met(imet_pbot, :) = -999._r8
+    end if
+
+    ! RH — optional
+    status = nf_inq_varid(ncid, "RH", varid)
+    if (status == nf_noerr) then
+       status = nf_get_vara_double(ncid, varid, start3, count3, tmp)
+       if (status /= nf_noerr) call handle_err(status, "RH")
+       buf%met(imet_rh, :) = tmp
+    else
+       buf%met(imet_rh, :) = -999._r8
+    end if
+
+    ! QBOT — optional
+    status = nf_inq_varid(ncid, "QBOT", varid)
+    if (status == nf_noerr) then
+       status = nf_get_vara_double(ncid, varid, start3, count3, tmp)
+       if (status /= nf_noerr) call handle_err(status, "QBOT")
+       buf%met(imet_qbot, :) = tmp
+    else
+       buf%met(imet_qbot, :) = -999._r8
+    end if
+
+    ! PRECTmms — required
+    status = nf_inq_varid(ncid, "PRECTmms", varid)
+    if (status /= nf_noerr) call handle_err(status, "PRECTmms")
+    status = nf_get_vara_double(ncid, varid, start3, count3, tmp)
+    if (status /= nf_noerr) call handle_err(status, "PRECTmms")
+    buf%met(imet_prect, :) = tmp
+
+    ! TBOT — required
+    status = nf_inq_varid(ncid, "TBOT", varid)
+    if (status /= nf_noerr) call handle_err(status, "TBOT")
+    status = nf_get_vara_double(ncid, varid, start3, count3, tmp)
+    if (status /= nf_noerr) call handle_err(status, "TBOT")
+    buf%met(imet_tbot, :) = tmp
+
+    ! WIND — required
+    status = nf_inq_varid(ncid, "WIND", varid)
+    if (status /= nf_noerr) call handle_err(status, "WIND")
+    status = nf_get_vara_double(ncid, varid, start3, count3, tmp)
+    if (status /= nf_noerr) call handle_err(status, "WIND")
+    buf%met(imet_wind, :) = tmp
+
+    ! ZBOT — optional
+    status = nf_inq_varid(ncid, "ZBOT", varid)
+    if (status == nf_noerr) then
+       status = nf_get_vara_double(ncid, varid, start3, count3, tmp)
+       if (status /= nf_noerr) call handle_err(status, "ZBOT")
+       buf%met(imet_zbot, :) = tmp
+    else
+       buf%met(imet_zbot, :) = -999._r8
+    end if
+
+    status = nf_close(ncid)
+    deallocate (tmp)
+
+  end subroutine prefill_tower_met
 
 end module TowerMetMod

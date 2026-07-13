@@ -16,7 +16,6 @@ module clm_initializeMod
   use filterMod, only : allocFilters, filter
   use clm_instMod, only : clm_instInit
   use MLpftconMod, only : MLpftcon                     !!! CLMml !!!
-  use MLCanopyTurbulenceMod , only : LookupPsihatINI   !!! CLMml !!!
   !
   ! !PUBLIC TYPES:
   implicit none
@@ -59,11 +58,6 @@ contains
 
     call pftcon%Init()
     call MLpftcon%Init()    !!! CLMml pfts !!!
-
-    ! Initialize the look-up tables needed to calculate the CLMml
-    ! roughness sublayer psihat functions
-
-    call LookupPsihatINI   !!! CLMml !!!
 
     ! Allocate memory for subgrid data structures
 

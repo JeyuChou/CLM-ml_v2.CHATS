@@ -6,8 +6,27 @@
 # To remove obj files and mod files: type 'make clean'
 # ###############################################
 
+# Set netcdf paths
+ifeq ($(strip $(NCAR_LDFLAGS_NETCDF)),)
+LIB_NETCDF = $(NETCDF_PATH)/lib
+else
 LIB_NETCDF = $(NCAR_LDFLAGS_NETCDF)
+endif
+ifeq ($(strip $(NCAR_INC_NETCDF)),)
+MOD_NETCDF = $(NETCDF_PATH)/include
+else
 MOD_NETCDF = $(NCAR_INC_NETCDF)
+endif
+
+# Choose intel compiler
+IFX_AVAILABLE := $(shell command -v ifx 2>/dev/null)
+ifneq ($(IFX_AVAILABLE),)
+    # ifx is available
+    FC := ifx
+else
+    # ifx is not available
+    FC := ifort
+endif
 
 # Source code directories
 
@@ -32,22 +51,13 @@ prgm = $(O)/prgm.exe
 # otherwise become make's default goal (building only the first object file).
 .DEFAULT_GOAL := $(prgm)
 
-#GCC Compiler (OpenMP -- -fopenmp enabled)
-#cmplr = gfortran -O0 -g -fbacktrace -fopenmp -fcheck=all -Wall -ffpe-trap=zero,invalid,overflow -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
-
 #Intel Compiler (OpenMP -- -qopenmp enabled)
-#cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
-cmplr = ifx -O0 -g -traceback -qopenmp -check all -warn all -fpe0 -module $(O) -L$(LIB_NETCDF) -I$(MOD_NETCDF) -L$(HOME)/usr/lib64 -lnetcdff -qmkl -lm
-# Fortran 95 compiler (OpenMP -- -mp enabled)
-
-#cmplr = nvfortran -O0 -g -mp -traceback -C -Minform=inform -Ktrap=fp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L$(HOME)/usr/lib64
-
-#cmplr = nvfortran -O2 -mp -L$(LIB_NETCDF) -I$(MOD_NETCDF) -lnetcdff -lblas -lm -L/usr/lib64
+cmplr = $(FC) -O0 -g -traceback -qopenmp -check all -check noarg_temp_created -warn all -fpe0 -module $(O) -L$(LIB_NETCDF) -I$(MOD_NETCDF) -L$(HOME)/usr/lib64 -lnetcdff -qmkl -lm
 
 # Specify module files (that all other files use). Order matters, because some files
 # are used by other files in mods list
 
-mods = ${O}/shr_kind_mod.o ${O}/clm_varcon.o ${O}/clm_varctl.o ${O}/MLclm_varctl.o ${O}/clmSoilOptionMod.o ${O}/clm_varpar.o \
+mods = ${O}/shr_kind_mod.o ${O}/ForcingBufMod.o ${O}/clm_varcon.o ${O}/clm_varctl.o ${O}/MLclm_varctl.o ${O}/clmSoilOptionMod.o ${O}/clm_varpar.o \
 	${O}/MLclm_varcon.o ${O}/MLclm_varpar.o ${O}/spmdMod.o \
 	${O}/ColumnType.o ${O}/PatchType.o ${O}/GridcellType.o \
 	${O}/CanopyStateType.o ${O}/EnergyFluxType.o ${O}/FrictionVelocityMod.o ${O}/SoilStateType.o \
@@ -110,6 +120,9 @@ $(prgm): $(objs)
 
 ${O}/shr_kind_mod.o: ${shr}/shr_kind_mod.F90
 	$(cmplr) -c ${shr}/shr_kind_mod.F90 -o ${O}/shr_kind_mod.o
+
+${O}/ForcingBufMod.o: ${main}/ForcingBufMod.F90 ${O}/shr_kind_mod.o
+	$(cmplr) -c ${main}/ForcingBufMod.F90 -o ${O}/ForcingBufMod.o
 
 ${O}/shr_file_mod.o: ${shr}/shr_file_mod.F90 ${O}/shr_kind_mod.o ${O}/clm_varctl.o ${O}/abortutils.o
 	$(cmplr) -c ${shr}/shr_file_mod.F90 -o ${O}/shr_file_mod.o
