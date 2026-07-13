@@ -130,7 +130,6 @@ contains
     ! one patch (one grid cell with one column and one patch).
     !---------------------------------------------------------------
 
-    !$OMP CRITICAL(hdf5_io)
     if (.not. clm_initialized) then
        call InitializeRealize (bounds)
        clm_initialized = .true.
@@ -139,7 +138,6 @@ contains
        call clm_instReset (bounds)
        if (.not. tower_error_flag) call setFilters (filter)
     end if
-    !$OMP END CRITICAL(hdf5_io)
     if (tower_error_flag) return
 
     !---------------------------------------------------------------
@@ -152,10 +150,8 @@ contains
     ! Read tower meteorology data once to get acclimation temperature
     !---------------------------------------------------------------
 
-    !$OMP CRITICAL(hdf5_io)
     call init_acclim (fin_tower, tower_num, ntim, bounds%begp, bounds%endp, &
     atm2lnd_inst, wateratm2lndbulk_inst, temperature_inst, frictionvel_inst, mlcanopy_inst)
-    !$OMP END CRITICAL(hdf5_io)
     if (tower_error_flag) return
 
     !---------------------------------------------------------------
@@ -198,10 +194,8 @@ contains
 
     ! Read history file
 
-    !$OMP CRITICAL(hdf5_io)
     call SoilInit (fin_clm, time_indx, bounds%begc, bounds%endc, soilstate_inst, &
     waterstatebulk_inst, temperature_inst)
-    !$OMP END CRITICAL(hdf5_io)
     if (tower_error_flag) return
 
     !---------------------------------------------------------------
