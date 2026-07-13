@@ -11,12 +11,16 @@ program CLMml
   use clmDataMod,         only : prefill_clm, prefill_factor
   use clmSoilOptionMod,   only : clm_phys
   use clm_varpar,         only : clm_varpar_init
+  use omp_lib,            only : omp_get_wtime
   implicit none
   integer :: nc
+  double precision :: tstart, tend
+
 
   type(bounds_type)        :: bounds
   type(tower_config_type)  :: configs(ntower)
 
+  tstart = omp_get_wtime()
   write (*,*) "Starting Run!"
 
   ! Read all ntower namelist blocks from stdin sequentially, before any threads start.
@@ -58,5 +62,7 @@ program CLMml
     call CLMml_drv(bounds, configs(nc))
   end do
   !$OMP END PARALLEL DO
+  tend = omp_get_wtime()
+  write(*,*) "Run completed in ", tend - tstart, " seconds."
 
 end program CLMml
