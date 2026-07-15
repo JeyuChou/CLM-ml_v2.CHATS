@@ -2,7 +2,6 @@ program CLMml
 
   use decompMod,    only : bounds_type, get_clump_bounds, decompInit, nclumps
   use CLMml_driver, only : CLMml_drv, clm_initialized
-  use TowerDataMod, only : ntower, tower_id, tower_num
   use abortutils,   only : tower_error_flag, tower_error_msg, reset_tower_error
   use controlMod,   only : tower_config_type, read_all_configs
   use MLCanopyTurbulenceMod, only : LookupPsihatINI
@@ -13,26 +12,27 @@ program CLMml
   use clm_varpar,         only : clm_varpar_init
   use omp_lib,            only : omp_get_wtime
   implicit none
+  integer, parameter       :: ngridcell = 15
   integer :: nc
   double precision :: tstart, tend
 
 
   type(bounds_type)        :: bounds
-  type(tower_config_type)  :: configs(ntower)
+  type(tower_config_type)  :: configs(ngridcell)
 
   tstart = omp_get_wtime()
   write (*,*) "Starting Run!"
 
-  ! Read all ntower namelist blocks from stdin sequentially, before any threads start.
+  ! Read all ngridcell namelist blocks from stdin sequentially, before any threads start.
   ! This is necessary because stdin cannot be read safely from multiple threads at once.
-  call read_all_configs(configs, ntower)
-  do nc = 1, ntower
+  call read_all_configs(configs, ngridcell)
+  do nc = 1, ngridcell
     configs(nc)%run_idx = nc
   end do
   write(*,*) "Read all tower configs."
 
-  ! One clump per tower — each OMP thread will process one tower at a time
-  call decompInit(ntower)
+  ! One clump per gridcell — each OMP thread will process one gridcell at a time
+  call decompInit(ngridcell)
   write(*,*) "Initialized decomposition."
 
   ! Read RSL psihat look-up tables once, single-threaded, before the parallel
@@ -42,8 +42,8 @@ program CLMml
 
   ! Pre-read all tower met forcing into memory before the parallel region so
   ! that readTowerMet never calls netCDF from inside an OMP thread.
-  allocate (forcing(ntower))
-  do nc = 1, ntower
+  allocate (forcing(ngridcell))
+  do nc = 1, ngridcell
     call prefill_tower_met(configs(nc)%fin_tower, configs(nc)%ntim, forcing(nc))
     clm_phys = configs(nc)%clm_phys
     call clm_varpar_init()
@@ -54,7 +54,7 @@ program CLMml
   use_buffer = .true.
 
   !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC) COPYIN(clm_initialized)
-  do nc = 1, ntower
+  do nc = 1, ngridcell
     if (nc > 3) then
       cycle
     end if
