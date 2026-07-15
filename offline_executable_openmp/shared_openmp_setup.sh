@@ -54,6 +54,13 @@ export CLMML_NGRIDCELL="${CLMML_NGRIDCELL:-15}"
 BUILD_DIR="build_run_${OMP_NUM_THREADS}threads_${CLMML_NGRIDCELL}gridcells"
 mkdir -p "$BUILD_DIR"
 
+# Generate a namelist with exactly CLMML_NGRIDCELL blocks by repeating the
+# single-block template. For CLMML_NGRIDCELL=15 this produces the same logical
+# content as nl.all_CHATS7.05.2007 (trailing newline may differ; Fortran
+# namelist reader is insensitive to this).
+NL_FILE="${BUILD_DIR}/nl.CHATS7.05.2007.${CLMML_NGRIDCELL}gridcells"
+for i in $(seq 1 "$CLMML_NGRIDCELL"); do cat nl.CHATS7.05.2007; done > "$NL_FILE"
+
 # Route model output into an output_files/ subdir of this run's build_run_*
 # dir (see CLMML_DIROUT in controlMod.F90). Trailing slash required — dirout
 # is prepended directly to filenames.
@@ -80,12 +87,12 @@ if [ "${USE_GDB:-false}" = true ]; then
     echo "Running the executable under $GDB_BIN (non-interactive)..."
     echo "  Program output and traceback -> $LOGFILE"
     "$GDB_BIN" -batch \
-        -ex 'run < nl.all_CHATS7.05.2007' \
+        -ex "run < $NL_FILE" \
         -ex 'thread apply all bt' \
         --args "./${BUILD_DIR}/prgm.exe" \
         > "$LOGFILE" 2>&1 || true
     echo "gdb run complete. See $LOGFILE"
 else
     echo "Running the executable with OpenMP..."
-    stdbuf -oL -eL "./${BUILD_DIR}/prgm.exe" < nl.all_CHATS7.05.2007 > "$LOGFILE" 2>&1
+    stdbuf -oL -eL "./${BUILD_DIR}/prgm.exe" < "$NL_FILE" > "$LOGFILE" 2>&1
 fi
