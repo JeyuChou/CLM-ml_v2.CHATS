@@ -96,12 +96,12 @@ contains
   subroutine clm_instReset (bounds)
     !
     ! !DESCRIPTION:
-    ! Re-set per-tower values in already-allocated arrays for a new tower_num.
+    ! Re-set per-gridcell values in already-allocated arrays for a new gridcell_num.
     ! Called instead of clm_instInit for the second and subsequent tower runs.
     ! Does NOT allocate anything — arrays were allocated by clm_instInit.
     !
     ! !USES:
-    use TowerDataMod, only : tower_num, tower_pft
+    use TowerDataMod, only : gridcell_num, gc_pft
     use PatchType, only : patch
     use clm_varcon, only : spval
     !
@@ -115,7 +115,7 @@ contains
 
     ! Update patch PFT for the new tower
     do p = bounds%begp, bounds%endp
-       patch%itype(p) = tower_pft(tower_num)
+       patch%itype(p) = gc_pft(gridcell_num)
     end do
 
     ! Re-set soil layer structure and bedrock depth for the new tower

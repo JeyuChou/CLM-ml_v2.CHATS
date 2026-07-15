@@ -6,6 +6,7 @@ program CLMml
   use controlMod,   only : tower_config_type, read_all_configs
   use MLCanopyTurbulenceMod, only : LookupPsihatINI
   use ForcingBufMod,      only : forcing, use_buffer
+  use TowerDataMod,       only : prefill_tower_data
   use TowerMetMod,        only : prefill_tower_met
   use clmDataMod,         only : prefill_clm, prefill_factor
   use clmSoilOptionMod,   only : clm_phys
@@ -59,6 +60,7 @@ program CLMml
   ! that readTowerMet never calls netCDF from inside an OMP thread.
   allocate (forcing(ngridcell))
   do nc = 1, ngridcell
+    call prefill_tower_data(nc, configs(nc)%tower_idx, ngridcell)
     call prefill_tower_met(configs(nc)%fin_tower, configs(nc)%ntim, forcing(nc))
     clm_phys = configs(nc)%clm_phys
     call clm_varpar_init()

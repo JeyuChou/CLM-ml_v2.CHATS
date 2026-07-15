@@ -12,10 +12,13 @@ module TowerDataMod
   save
   !-----------------------------------------------------------------------
 
-  integer            :: tower_num              ! Tower site index (maps to TowerDataMod arrays)
-  !$OMP THREADPRIVATE(tower_num)
+  integer            :: gridcell_num           ! Gridcell index (1..ngridcell); physics uses this to index gc_* arrays
+  !$OMP THREADPRIVATE(gridcell_num)
 
   integer, parameter :: ntower = 15            ! Number of tower sites
+  private :: tower_id, tower_lat, tower_lon, tower_pft, tower_tex, tower_sand, tower_clay, &
+             tower_organic, tower_isoicol, tower_zbed, tower_ht, tower_canht, tower_root,  &
+             tower_time, tower_pbeta_lai, tower_pbeta_sai
   character(len=6)   :: tower_id(ntower)       ! Tower site name
   real(r8)           :: tower_lat(ntower)      ! Latitude of tower (degrees)
   real(r8)           :: tower_lon(ntower)      ! Longitude of tower (degrees)
@@ -33,6 +36,24 @@ module TowerDataMod
 
   real(r8) :: tower_pbeta_lai(ntower,2) ! Parameters for the leaf area density 2-parameter beta distribution (-)
   real(r8) :: tower_pbeta_sai(ntower,2) ! Parameters for the stem area density 2-parameter beta distribution (-)
+
+  ! Per-gridcell buffer arrays: allocated to ngridcell and prefilled from the tower tables
+  ! before the OMP region. Physics reads gc_*(gridcell_num) instead of tower_*(tower_num).
+  character(len=6),  allocatable :: gc_id(:)
+  real(r8),          allocatable :: gc_lat(:)
+  real(r8),          allocatable :: gc_lon(:)
+  integer,           allocatable :: gc_pft(:)
+  character(len=15), allocatable :: gc_tex(:)
+  real(r8),          allocatable :: gc_sand(:)
+  real(r8),          allocatable :: gc_clay(:)
+  real(r8),          allocatable :: gc_organic(:)
+  integer,           allocatable :: gc_isoicol(:)
+  real(r8),          allocatable :: gc_zbed(:)
+  real(r8),          allocatable :: gc_ht(:)
+  real(r8),          allocatable :: gc_canht(:)
+  real(r8),          allocatable :: gc_root(:)
+  real(r8),          allocatable :: gc_pbeta_lai(:,:)
+  real(r8),          allocatable :: gc_pbeta_sai(:,:)
 
   ! Tower site name
 
@@ -129,5 +150,78 @@ module TowerDataMod
   ! Time step of forcing data for tower (minutes)
 
   data tower_time / 60, 30, 60, 60, 30, 30, 30, 30, 60, 30, 30, 30, 30, 30, 60/
+
+contains
+
+  !-----------------------------------------------------------------------
+  subroutine prefill_tower_data (nc, tower_idx, ngridcell_total)
+    !
+    ! Allocate gc_* arrays on first call (nc==1), then copy tower table row
+    ! tower_idx into gridcell slot nc.  Called once per gridcell in the
+    ! serial prefill loop of CLMml.F90 before the OMP parallel region.
+    !
+    implicit none
+    integer, intent(in) :: nc             ! Gridcell index being filled (1..ngridcell_total)
+    integer, intent(in) :: tower_idx      ! Index into the tower_* tables for this gridcell
+    integer, intent(in) :: ngridcell_total! Total number of gridcells (used for allocation on first call)
+
+    if (.not. allocated(gc_id)) then
+      allocate(gc_id(ngridcell_total))
+      allocate(gc_lat(ngridcell_total))
+      allocate(gc_lon(ngridcell_total))
+      allocate(gc_pft(ngridcell_total))
+      allocate(gc_tex(ngridcell_total))
+      allocate(gc_sand(ngridcell_total))
+      allocate(gc_clay(ngridcell_total))
+      allocate(gc_organic(ngridcell_total))
+      allocate(gc_isoicol(ngridcell_total))
+      allocate(gc_zbed(ngridcell_total))
+      allocate(gc_ht(ngridcell_total))
+      allocate(gc_canht(ngridcell_total))
+      allocate(gc_root(ngridcell_total))
+      allocate(gc_pbeta_lai(ngridcell_total,2))
+      allocate(gc_pbeta_sai(ngridcell_total,2))
+    end if
+
+    gc_id(nc)         = tower_id(tower_idx)
+    gc_lat(nc)        = tower_lat(tower_idx)
+    gc_lon(nc)        = tower_lon(tower_idx)
+    gc_pft(nc)        = tower_pft(tower_idx)
+    gc_tex(nc)        = tower_tex(tower_idx)
+    gc_sand(nc)       = tower_sand(tower_idx)
+    gc_clay(nc)       = tower_clay(tower_idx)
+    gc_organic(nc)    = tower_organic(tower_idx)
+    gc_isoicol(nc)    = tower_isoicol(tower_idx)
+    gc_zbed(nc)       = tower_zbed(tower_idx)
+    gc_ht(nc)         = tower_ht(tower_idx)
+    gc_canht(nc)      = tower_canht(tower_idx)
+    gc_root(nc)       = tower_root(tower_idx)
+    gc_pbeta_lai(nc,:)= tower_pbeta_lai(tower_idx,:)
+    gc_pbeta_sai(nc,:)= tower_pbeta_sai(tower_idx,:)
+
+  end subroutine prefill_tower_data
+
+  !-----------------------------------------------------------------------
+  integer function lookup_tower_idx (tower_name)
+    ! Linear scan of tower_id; returns 0 if not found.
+    implicit none
+    character(len=*), intent(in) :: tower_name
+    integer :: i
+    lookup_tower_idx = 0
+    do i = 1, ntower
+      if (tower_name == tower_id(i)) then
+        lookup_tower_idx = i
+        return
+      end if
+    end do
+  end function lookup_tower_idx
+
+  !-----------------------------------------------------------------------
+  integer function tower_timestep_min (idx)
+    ! Returns the forcing timestep (minutes) for tower index idx.
+    implicit none
+    integer, intent(in) :: idx
+    tower_timestep_min = tower_time(idx)
+  end function tower_timestep_min
 
 end module TowerDataMod

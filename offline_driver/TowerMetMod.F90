@@ -139,7 +139,7 @@ contains
     use clm_varpar, only : ivis, inir
     use MLclm_varcon, only : mmh2o, mmdry
     use MLWaterVaporMod, only : SatVap
-    use TowerDataMod, only : tower_ht, tower_lat, tower_lon
+    use TowerDataMod, only : gc_ht, gc_lat, gc_lon
     !
     ! !ARGUMENTS:
     implicit none
@@ -235,7 +235,7 @@ contains
 
        ! Overwrite forcing height with tower data
 
-       forc_hgt_u(p) = tower_ht(it)
+       forc_hgt_u(p) = gc_ht(it)
 
        ! Set forcing height to 30 m if tower forcing data has no height
 
@@ -278,8 +278,8 @@ contains
        ! Latitude and longitude (degrees)
        ! --------------------------------
 
-       grc%latdeg(g) = tower_lat(it)
-       grc%londeg(g) = tower_lon(it)
+       grc%latdeg(g) = gc_lat(it)
+       grc%londeg(g) = gc_lon(it)
 
     end do
 

@@ -69,7 +69,7 @@ contains
     !
     ! !USES:
     use clm_varctl,       only : iulog
-    use TowerDataMod,     only : ntower, tower_id, tower_time
+    use TowerDataMod,     only : lookup_tower_idx, tower_timestep_min
     use MLclm_varctl,     only : met_type, dpai_min, pftcon_val
     !
     implicit none
@@ -83,7 +83,7 @@ contains
     character(len=256) :: fin_tower, fin_clm, fin_soil_adjust, dirout
     character(len=6)   :: clm_phys
     integer            :: nlev_soil_adjust
-    integer            :: i, dtstep_local, steps_per_day
+    integer            :: dtstep_local, steps_per_day
     character(len=256) :: dirout_env
     integer            :: env_len, env_stat
 
@@ -127,20 +127,14 @@ contains
     write(iulog,*) 'Output directory (dirout) = ', trim(dirout)
 
     ! Resolve tower_name to an integer index
-    cfg%tower_idx = 0
-    do i = 1, ntower
-      if (tower_name == tower_id(i)) then
-        cfg%tower_idx = i
-        exit
-      end if
-    end do
+    cfg%tower_idx = lookup_tower_idx(tower_name)
     if (cfg%tower_idx == 0) then
       write (iulog,*) 'read_one_config error: tower site = ', tower_name, ' not found'
       call endrun()
     end if
 
     ! Compute number of timesteps (same logic as old control())
-    dtstep_local = tower_time(cfg%tower_idx) * 60
+    dtstep_local = tower_timestep_min(cfg%tower_idx) * 60
     if (stop_option == 'nsteps') then
       cfg%ntim = stop_n
     else if (stop_option == 'ndays') then
@@ -179,7 +173,7 @@ contains
     ! !USES:
     use clm_time_manager, only : start_date_ymd, start_date_tod, dtstep
     use clmSoilOptionMod, only : clm_phys, nlev_soil_adjust
-    use TowerDataMod,     only : tower_num, tower_time
+    use TowerDataMod,     only : gridcell_num, tower_timestep_min
     use MLclm_varctl,     only : met_type, dpai_min, pftcon_val
     use omp_lib,          only : omp_get_thread_num
     use ForcingBufMod,    only : curr_run_idx
@@ -190,10 +184,10 @@ contains
     !---------------------------------------------------------------------
 
     curr_run_idx     = cfg%run_idx
-    tower_num        = cfg%tower_idx
+    gridcell_num     = cfg%run_idx
     start_date_ymd   = cfg%start_ymd
     start_date_tod   = cfg%start_tod
-    dtstep           = tower_time(tower_num) * 60
+    dtstep           = tower_timestep_min(cfg%tower_idx) * 60
     clm_phys         = cfg%clm_phys
     call clm_varpar_init()
     write(*,*) 'DEBUG apply_config: thread=', omp_get_thread_num(), &

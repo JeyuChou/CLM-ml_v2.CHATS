@@ -32,7 +32,7 @@ contains
     use clm_varcon, only : csol_bedrock
     use clm_varpar, only : nlevsoi, nlevgrnd
     use clm_varctl, only : iulog
-    use TowerDataMod, only : tower_num, tower_tex, tower_clay, tower_sand, tower_organic
+    use TowerDataMod, only : gridcell_num, gc_tex, gc_clay, gc_sand, gc_organic
     use SoilTexMod
     !
     ! !ARGUMENTS:
@@ -132,17 +132,17 @@ contains
 
        ! Organic matter fraction
 
-       om_frac = tower_organic(tower_num) / organic_max
+       om_frac = gc_organic(gridcell_num) / organic_max
 
        ! Use tower site clay and sand (if they are specified) to calculate
        ! hydraulic and thermal properties. Otherwise, obtain them from the
        ! specified soil texture.
 
-       if (tower_clay(tower_num) >= 0._r8 .and. tower_sand(tower_num) >= 0._r8) then
+       if (gc_clay(gridcell_num) >= 0._r8 .and. gc_sand(gridcell_num) >= 0._r8) then
 
           tex = 0
-          clay = tower_clay(tower_num)
-          sand = tower_sand(tower_num)
+          clay = gc_clay(gridcell_num)
+          sand = gc_sand(gridcell_num)
 
        else
 
@@ -150,7 +150,7 @@ contains
 
           tex = 0
           do m = 1, ntex
-             if (tower_tex(tower_num) == soil_tex(m)) then
+             if (gc_tex(gridcell_num) == soil_tex(m)) then
                 tex = m
                 exit
              else
@@ -158,7 +158,7 @@ contains
              end if
           end do
           if (tex == 0) then
-             write (iulog,*) ' ERROR: SoilStateInitTimeConst: soil type = ',tower_tex(tower_num), ' not found for c = ',c
+             write (iulog,*) ' ERROR: SoilStateInitTimeConst: soil type = ',gc_tex(gridcell_num), ' not found for c = ',c
              call endrun()
           end if
 

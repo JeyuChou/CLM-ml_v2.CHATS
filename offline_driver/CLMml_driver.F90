@@ -49,7 +49,7 @@ contains
     use lnd_comp_nuopc, only : InitializeRealize, ModelAdvance
     use PatchType, only : patch
     use shr_orb_mod, only : shr_orb_params
-    use TowerDataMod, only : tower_id, tower_num
+    use TowerDataMod, only : gc_id, gridcell_num
     use TowerMetMod, only : TowerMetCurr, TowerMetNext
     use omp_lib, only : omp_get_thread_num
     !
@@ -116,8 +116,8 @@ contains
     itim = 1
     call get_curr_date (yr, mon, day, curr_date_tod)
 
-    write (iulog,*) 'Processing: ', tower_id(tower_num), &
-         '  tower_idx=', tower_num, '  run_idx=', cfg%run_idx, &
+    write (iulog,*) 'Processing: ', gc_id(gridcell_num), &
+         '  tower_idx=', cfg%tower_idx, '  run_idx=', cfg%run_idx, &
          '  (', yr, '-', mon, ')  Thread:', omp_get_thread_num(), &
          merge(' [MASTER]', '         ', omp_get_thread_num() == 0)
 
@@ -150,7 +150,7 @@ contains
     ! Read tower meteorology data once to get acclimation temperature
     !---------------------------------------------------------------
 
-    call init_acclim (fin_tower, tower_num, ntim, bounds%begp, bounds%endp, &
+    call init_acclim (fin_tower, gridcell_num, ntim, bounds%begp, bounds%endp, &
     atm2lnd_inst, wateratm2lndbulk_inst, temperature_inst, frictionvel_inst, mlcanopy_inst)
     if (tower_error_flag) return
 
@@ -158,7 +158,7 @@ contains
     ! Initialize tower vegetation
     !---------------------------------------------------------------
 
-    call TowerVeg (tower_num, bounds%begp, bounds%endp, canopystate_inst, mlcanopy_inst)
+    call TowerVeg (gridcell_num, bounds%begp, bounds%endp, canopystate_inst, mlcanopy_inst)
     if (tower_error_flag) return
 
     !---------------------------------------------------------------
@@ -205,32 +205,32 @@ contains
     ! and soil temperature (fout6)
     !---------------------------------------------------------------
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_flux.out")') tower_id(tower_num),yr,mon,cfg%run_idx
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_flux.out")') gc_id(gridcell_num),yr,mon,cfg%run_idx
     fout1 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout1 = getavu()
     open (unit=nout1, file=trim(fout1), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_aux.out")') tower_id(tower_num),yr,mon,cfg%run_idx
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_aux.out")') gc_id(gridcell_num),yr,mon,cfg%run_idx
     fout2 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout2 = getavu()
     open (unit=nout2, file=trim(fout2), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_profile.out")') tower_id(tower_num),yr,mon,cfg%run_idx
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_profile.out")') gc_id(gridcell_num),yr,mon,cfg%run_idx
     fout3 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout3 = getavu()
     open (unit=nout3, file=trim(fout3), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_fsun.out")') tower_id(tower_num),yr,mon,cfg%run_idx
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_fsun.out")') gc_id(gridcell_num),yr,mon,cfg%run_idx
     fout4 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout4 = getavu()
     open (unit=nout4, file=trim(fout4), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_fluxprofile.out")') tower_id(tower_num),yr,mon,cfg%run_idx
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_fluxprofile.out")') gc_id(gridcell_num),yr,mon,cfg%run_idx
     fout5 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout5 = getavu()
     open (unit=nout5, file=trim(fout5), action="write")
 
-    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_soiltemp.out")') tower_id(tower_num),yr,mon,cfg%run_idx
+    write (ext,'(a6,"_",i4.4,"-",i2.2,"_t",i2.2,"_soiltemp.out")') gc_id(gridcell_num),yr,mon,cfg%run_idx
     fout6 = dirout(1:len(trim(dirout)))//ext(1:len(trim(ext)))
     nout6 = getavu()
     open (unit=nout6, file=trim(fout6), action="write")
@@ -268,7 +268,7 @@ contains
 
        ! Read tower meteorology for current time slice
 
-       call TowerMetCurr (fin_tower, itim, tower_num, bounds%begp, bounds%endp, atm2lnd_inst, &
+       call TowerMetCurr (fin_tower, itim, gridcell_num, bounds%begp, bounds%endp, atm2lnd_inst, &
        wateratm2lndbulk_inst, frictionvel_inst)
        if (tower_error_flag) exit
 
@@ -296,7 +296,7 @@ contains
 
        ! Write output files
 
-       call output (curr_calday, tower_num, nout1, nout2, nout3, nout4, nout5, nout6, &
+       call output (curr_calday, gridcell_num, nout1, nout2, nout3, nout4, nout5, nout6, &
        mlcanopy_inst, temperature_inst)
        if (tower_error_flag) exit
 
@@ -323,10 +323,10 @@ contains
 
     !$OMP CRITICAL(error_report)
     if (tower_error_flag) then
-       write (iulog,*) 'TOWER FAILED: ', tower_id(tower_num), ': ', trim(tower_error_msg)
+       write (iulog,*) 'TOWER FAILED: ', gc_id(gridcell_num), ': ', trim(tower_error_msg)
     else
-       write (iulog,*) 'Successfully finished simulation: ', tower_id(tower_num), &
-            '  tower_idx=', tower_num, '  run_idx=', cfg%run_idx, &
+       write (iulog,*) 'Successfully finished simulation: ', gc_id(gridcell_num), &
+            '  tower_idx=', cfg%tower_idx, '  run_idx=', cfg%run_idx, &
             '  Thread:', omp_get_thread_num(), &
             merge(' [MASTER]', '         ', omp_get_thread_num() == 0)
     end if
@@ -335,7 +335,7 @@ contains
   end subroutine CLMml_drv
 
   !-----------------------------------------------------------------------
-  subroutine init_acclim (fin, tower_num, ntim, begp, endp, &
+  subroutine init_acclim (fin, gridcell_num, ntim, begp, endp, &
   atm2lnd_inst, wateratm2lndbulk_inst, temperature_inst, frictionvel_inst, mlcanopy_inst)
     !
     ! !DESCRIPTION:
@@ -353,7 +353,7 @@ contains
     ! !ARGUMENTS:
     implicit none
     character(len=*), intent(in) :: fin     ! Tower meteorology file
-    integer, intent(in) :: tower_num        ! Tower site index
+    integer, intent(in) :: gridcell_num     ! Gridcell index (indexes gc_* arrays)
     integer, intent(in) :: ntim             ! Number of time slices to process
     integer, intent(in) :: begp, endp       ! First and last patch
     type(atm2lnd_type), intent(inout) :: atm2lnd_inst
@@ -387,7 +387,7 @@ contains
 
        ! Read temperature for this time slice
 
-       call TowerMetCurr (fin, itim, tower_num, begp, endp, atm2lnd_inst, &
+       call TowerMetCurr (fin, itim, gridcell_num, begp, endp, atm2lnd_inst, &
        wateratm2lndbulk_inst, frictionvel_inst)
 
        do p = begp, endp
@@ -422,7 +422,7 @@ contains
     ! !USES:
     use clm_varpar, only : mxpft
     use PatchType, only : patch
-    use TowerDataMod, only : tower_pft, tower_canht, tower_root, tower_pbeta_lai, tower_pbeta_sai
+    use TowerDataMod, only : gc_pft, gc_canht, gc_root, gc_pbeta_lai, gc_pbeta_sai
     use CanopyStateType, only : canopystate_type
     use MLCanopyFluxesType, only : mlcanopy_type
     !
@@ -456,20 +456,20 @@ contains
 
        ! PFT
 
-       patch%itype(p) = tower_pft(it)
+       patch%itype(p) = gc_pft(it)
 
        ! Use tower value if set in TowerDataMod
 
-       if (tower_canht(it) > 0._r8) then
-          htop(p) = tower_canht(it)
+       if (gc_canht(it) > 0._r8) then
+          htop(p) = gc_canht(it)
        else
           htop(p) = htop_pft(patch%itype(p))
        end if
 
        ! Use root biomass if set in TowerDataMod
 
-       if (tower_root(it) > 0._r8) then
-          root_biomass(p) = tower_root(it)
+       if (gc_root(it) > 0._r8) then
+          root_biomass(p) = gc_root(it)
        else
           call endrun (msg=' TowerVeg ERROR: invalid root biomass')
           return
@@ -477,12 +477,12 @@ contains
 
       ! Use tower values if set in TowerDataMod. Otherwise, these are set to PFT values in subroutine getPADparameters
 
-      if (tower_pbeta_lai(it,1) > 0._r8 .and. tower_pbeta_lai(it,2) > 0._r8 .and. &
-      tower_pbeta_sai(it,1) > 0._r8 .and. tower_pbeta_sai(it,2) > 0._r8) then
-          pbeta_lai(p,1) = tower_pbeta_lai(it,1)
-          pbeta_lai(p,2) = tower_pbeta_lai(it,2)
-          pbeta_sai(p,1) = tower_pbeta_sai(it,1)
-          pbeta_sai(p,2) = tower_pbeta_sai(it,2)
+      if (gc_pbeta_lai(it,1) > 0._r8 .and. gc_pbeta_lai(it,2) > 0._r8 .and. &
+      gc_pbeta_sai(it,1) > 0._r8 .and. gc_pbeta_sai(it,2) > 0._r8) then
+          pbeta_lai(p,1) = gc_pbeta_lai(it,1)
+          pbeta_lai(p,2) = gc_pbeta_lai(it,2)
+          pbeta_sai(p,1) = gc_pbeta_sai(it,1)
+          pbeta_sai(p,2) = gc_pbeta_sai(it,2)
       end if
 
     end do
@@ -660,12 +660,11 @@ contains
     use MLCanopyFluxesType, only : mlcanopy_type
     use TemperatureType, only : temperature_type
     use MLWaterVaporMod, only : LatVap
-    use TowerDataMod, only : tower_id
     !
     ! !ARGUMENTS:
     implicit none
     real(r8), intent(in) :: curr_calday  ! Current calendar day
-    integer, intent(in)  :: it           ! Tower index: Tower name is tower_id(it)
+    integer, intent(in)  :: it           ! Gridcell index
     integer, intent(in)  :: nout1        ! Fortran unit number for output files
     integer, intent(in)  :: nout2        ! Fortran unit number for output files
     integer, intent(in)  :: nout3        ! Fortran unit number for output files

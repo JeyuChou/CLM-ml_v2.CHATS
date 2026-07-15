@@ -29,7 +29,7 @@ contains
     use clm_varpar, only : nlevsoi, nlevgrnd
     use clm_varcon, only: zmin_bedrock
     use clmSoilOptionMod, only : clm_phys
-    use TowerDataMod, only : tower_num, tower_zbed
+    use TowerDataMod, only : gridcell_num, gc_zbed
     use omp_lib, only : omp_get_thread_num
     !
     ! !ARGUMENTS:
@@ -134,7 +134,7 @@ contains
 
        ! Get depth to bedrock for the tower site
 
-       zbedrock = tower_zbed(tower_num)
+       zbedrock = gc_zbed(gridcell_num)
 
        ! Determine minimum index of minimum soil depth
 

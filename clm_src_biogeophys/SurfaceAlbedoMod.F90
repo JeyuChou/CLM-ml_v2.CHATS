@@ -35,7 +35,7 @@ contains
     ! !USES:
     use clm_varpar, only : numrad, ivis, inir
     use abortutils, only : endrun
-    use TowerDataMod, only : tower_isoicol, tower_num
+    use TowerDataMod, only : gc_isoicol, gridcell_num
     !
     ! !ARGUMENTS:
     type(bounds_type), intent(in) :: bounds   ! CLM column bounds
@@ -51,7 +51,7 @@ contains
     begc = bounds%begc ; endc = bounds%endc
     if (.not. allocated(isoicol)) allocate (isoicol(begc:endc))
     do c = begc, endc
-       isoicol(c) = tower_isoicol(tower_num)
+       isoicol(c) = gc_isoicol(gridcell_num)
     end do
 
     ! Set saturated and dry soil albedos for mxsoil_color color classes

@@ -40,7 +40,7 @@ contains
     ! Initialize vegetated landunit with competition
     !
     ! !USES:
-    use TowerDataMod, only : tower_pft, tower_num
+    use TowerDataMod, only : gc_pft, gridcell_num
     use initSubgridMod, only : add_patch
     !
     ! !LOCAL VARIABLES:
@@ -51,7 +51,7 @@ contains
     ! column and one patch) and the subgrid patch structure is set accordingly.
 
     pi = 0
-    call add_patch (pi, tower_pft(tower_num))
+    call add_patch (pi, gc_pft(gridcell_num))
 
   end subroutine set_landunit_veg_compete
 
