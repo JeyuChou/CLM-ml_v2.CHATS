@@ -11,7 +11,7 @@ program CLMml
   use clmDataMod,         only : prefill_clm, prefill_factor
   use clmSoilOptionMod,   only : clm_phys
   use clm_varpar,         only : clm_varpar_init
-  use omp_lib,            only : omp_get_wtime
+  use omp_lib,            only : omp_get_wtime, omp_get_max_threads
   implicit none
   integer :: ngridcell
   integer :: nc
@@ -21,8 +21,6 @@ program CLMml
 
   type(bounds_type)        :: bounds
   type(tower_config_type), allocatable :: configs(:)
-
-  tstart = omp_get_wtime()
 
   call get_environment_variable('CLMML_NGRIDCELL', ngridcell_env, &
        length=env_len, status=env_stat)
@@ -70,6 +68,7 @@ program CLMml
   end do
   use_buffer = .true.
 
+  tstart = omp_get_wtime()
   !$OMP PARALLEL DO PRIVATE(bounds, nc) SCHEDULE(DYNAMIC) COPYIN(clm_initialized)
   do nc = 1, ngridcell
     call get_clump_bounds(nc, bounds)
@@ -77,6 +76,9 @@ program CLMml
   end do
   !$OMP END PARALLEL DO
   tend = omp_get_wtime()
-  write(*,*) "Run completed in ", tend - tstart, " seconds."
+  write(*,'(A,I0,A,I0,A,F14.6)') &
+    "BENCHMARK towers=", ngridcell, &
+    " threads=", omp_get_max_threads(), &
+    " walltime_s=", tend-tstart
 
 end program CLMml
