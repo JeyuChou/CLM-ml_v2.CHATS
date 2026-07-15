@@ -40,7 +40,8 @@ drv = ../offline_driver
 
 # Directory for object files
 
-O = build_run_$(OMP_NUM_THREADS)threads
+CLMML_NGRIDCELL ?= 15
+O = build_run_$(OMP_NUM_THREADS)threads_$(CLMML_NGRIDCELL)gridcells
 
 # Executable is "prgm.exe"
 

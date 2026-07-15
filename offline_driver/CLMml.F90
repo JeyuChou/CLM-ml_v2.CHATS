@@ -2,7 +2,7 @@ program CLMml
 
   use decompMod,    only : bounds_type, get_clump_bounds, decompInit, nclumps
   use CLMml_driver, only : CLMml_drv, clm_initialized
-  use abortutils,   only : tower_error_flag, tower_error_msg, reset_tower_error
+  use abortutils,   only : tower_error_flag, tower_error_msg, reset_tower_error, endrun
   use controlMod,   only : tower_config_type, read_all_configs
   use MLCanopyTurbulenceMod, only : LookupPsihatINI
   use ForcingBufMod,      only : forcing, use_buffer
@@ -12,15 +12,30 @@ program CLMml
   use clm_varpar,         only : clm_varpar_init
   use omp_lib,            only : omp_get_wtime
   implicit none
-  integer, parameter       :: ngridcell = 15
+  integer :: ngridcell
   integer :: nc
   double precision :: tstart, tend
-
+  character(len=20) :: ngridcell_env
+  integer :: env_len, env_stat
 
   type(bounds_type)        :: bounds
-  type(tower_config_type)  :: configs(ngridcell)
+  type(tower_config_type), allocatable :: configs(:)
 
   tstart = omp_get_wtime()
+
+  call get_environment_variable('CLMML_NGRIDCELL', ngridcell_env, &
+       length=env_len, status=env_stat)
+  if (env_stat == 0 .and. env_len > 0) then
+    read(ngridcell_env, *) ngridcell
+  else
+    ngridcell = 15
+  end if
+  if (ngridcell <= 0) then
+    write(*,*) 'ERROR: CLMML_NGRIDCELL must be > 0, got ', ngridcell
+    call endrun()
+  end if
+  allocate(configs(ngridcell))
+
   write (*,*) "Starting Run!"
 
   ! Read all ngridcell namelist blocks from stdin sequentially, before any threads start.

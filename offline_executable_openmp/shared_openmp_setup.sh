@@ -50,7 +50,8 @@ fi
 
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$SCRIPT_DIR"
-BUILD_DIR="build_run_${OMP_NUM_THREADS}threads"
+export CLMML_NGRIDCELL="${CLMML_NGRIDCELL:-15}"
+BUILD_DIR="build_run_${OMP_NUM_THREADS}threads_${CLMML_NGRIDCELL}gridcells"
 mkdir -p "$BUILD_DIR"
 
 # Route model output into an output_files/ subdir of this run's build_run_*
