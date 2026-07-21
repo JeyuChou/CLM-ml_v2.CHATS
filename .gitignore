@@ -10,3 +10,6 @@ CLMml_CHATS7.o6441001
 *.txt
 .vscode
 build_run_*/
+offline_executable_openmp/benchmark_results.csv
+offline_executable_openmp/ensemble_benchmark_fortran.csv
+offline_executable_openmp/nl.benchmark.run
