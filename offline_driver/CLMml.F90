@@ -18,6 +18,10 @@ program CLMml
   double precision :: tstart, tend
   character(len=20) :: ngridcell_env
   integer :: env_len, env_stat
+  character(len=256) :: csv_path
+  integer :: csv_len, csv_stat, csv_unit, csv_iostat
+  integer :: nthreads
+  logical :: csv_exists
 
   type(bounds_type)        :: bounds
   type(tower_config_type), allocatable :: configs(:)
@@ -76,9 +80,28 @@ program CLMml
   end do
   !$OMP END PARALLEL DO
   tend = omp_get_wtime()
-  write(*,'(A,I0,A,I0,A,F14.6)') &
+  nthreads = omp_get_max_threads()
+  write(*,'(A,I0,A,I0,A,F0.6)') &
     "BENCHMARK towers=", ngridcell, &
-    " threads=", omp_get_max_threads(), &
+    " threads=", nthreads, &
     " walltime_s=", tend-tstart
+
+  call get_environment_variable('CLMML_BENCHMARK_CSV', csv_path, &
+       length=csv_len, status=csv_stat)
+  if (csv_stat == 0 .and. csv_len > 0) then
+    inquire(file=trim(csv_path), exist=csv_exists)
+    open(newunit=csv_unit, file=trim(csv_path), status='unknown', &
+         position='append', action='write', iostat=csv_iostat)
+    if (csv_iostat /= 0) then
+      write(*,*) 'WARNING: could not open CLMML_BENCHMARK_CSV: ', trim(csv_path)
+    else
+      if (.not. csv_exists) then
+        write(csv_unit,'(A)') 'towers,threads,walltime_s'
+      end if
+      write(csv_unit,'(I0,A,I0,A,F0.6)') &
+        ngridcell, ',', nthreads, ',', tend-tstart
+      close(csv_unit)
+    end if
+  end if
 
 end program CLMml
