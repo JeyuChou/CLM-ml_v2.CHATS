@@ -90,6 +90,7 @@ for towers in "${TOWER_VALS[@]}"; do
         est_s=$(( (towers + threads - 1) / threads * 12 ))
         if (( est_s > 7200 )); then
             echo "SKIP towers=${towers} threads=${threads}: ~${est_s}s estimated > 7200s cap"
+            echo "${towers},${threads},SKIP,est_${est_s}s" >> "${RESULTS_CSV}"
             continue
         fi
 
@@ -156,6 +157,8 @@ results_csv, ensemble_csv = sys.argv[1], sys.argv[2]
 data = {}  # (towers, threads) -> [walltime_s, ...]
 with open(results_csv) as f:
     for row in csv.DictReader(f):
+        if row["rep"] == "SKIP":
+            continue
         key = (int(row["towers"]), int(row["threads"]))
         data.setdefault(key, []).append(float(row["walltime_s"]))
 
